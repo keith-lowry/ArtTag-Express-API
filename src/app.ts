@@ -8,7 +8,9 @@ app.get("/", (req, res) => {
     res.send("Hello world!");
 })
 
+app.use(express.static("public"))
+
 app.listen(port, () => {
     console.log(`API: listening on port ${port}`);
-    console.log(config["postgres"]);
+    // console.log(config["postgres"]);
 })

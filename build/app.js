@@ -4,14 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const config_json_1 = __importDefault(require("./config.json"));
 const app = (0, express_1.default)();
 const port = 3000;
 app.get("/", (req, res) => {
     res.send("Hello world!");
 });
+app.use(express_1.default.static("public"));
 app.listen(port, () => {
     console.log(`API: listening on port ${port}`);
-    console.log(config_json_1.default["postgres"]);
+    // console.log(config["postgres"]);
 });
 //# sourceMappingURL=app.js.map

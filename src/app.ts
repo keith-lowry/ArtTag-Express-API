@@ -3,9 +3,10 @@ import config from './config.json';
 const app = express();
 const port = 3000;
 
+// art-tag route for 
 
-app.get("/", (req, res) => {
-    res.send("Hello world!");
+app.get("/art-tag", (req, res) => {
+    res.send("Help! me!");
 })
 
 app.use(express.static("public"))

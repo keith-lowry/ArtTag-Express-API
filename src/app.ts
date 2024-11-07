@@ -5,11 +5,11 @@ const port = 3000;
 
 // art-tag route for 
 
-app.get("/art-tag", (req, res) => {
+app.get("/api/help", (req, res) => {
     res.send("Help! me!");
 })
 
-app.use(express.static("public"))
+app.use("/images", express.static("public"))
 
 app.listen(port, () => {
     console.log(`API: listening on port ${port}`);

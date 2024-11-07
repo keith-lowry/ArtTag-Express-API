@@ -7,10 +7,10 @@ const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const port = 3000;
 // art-tag route for 
-app.get("/art-tag", (req, res) => {
+app.get("/api/help", (req, res) => {
     res.send("Help! me!");
 });
-app.use(express_1.default.static("public"));
+app.use("/images", express_1.default.static("public"));
 app.listen(port, () => {
     console.log(`API: listening on port ${port}`);
     // console.log(config["postgres"]);

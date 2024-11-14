@@ -1,16 +1,22 @@
 import { type Tag, type Image } from "../types.js"
-
 import { query } from "./pool.mjs"
+import config from "../../config.json" assert {type : 'json'}
+import format from 'pg-format';
+
+const schema = config.schema
 
 class ArtTagRepository {
     // handle logging within here
-    getTags():Array<Tag> {
-        // TODO
-        return []
+    async getTags():Promise<Tag[]> {
+        // NOTE: limit size? meh
+        const sql = format('SELECT * FROM %I.tags', schema);
+        const result = await query(sql)
+        return result.rows
     }
 
-    insertTag(name: string): boolean {
-        // TODO
+    async insertTag(name: string): Promise<boolean> {
+        const sql = format('INSERT INTO %I.tags (tag_name) VALUES (\'%s\') ON CONFLICT DO NOTHING', schema, name)
+        await query(sql);
         return false
     }
 

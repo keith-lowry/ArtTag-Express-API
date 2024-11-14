@@ -2,8 +2,9 @@ import express from "express";
 import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
 const app = express();
-const jsonParser = bodyParser.json();
+// const jsonParser = bodyParser.json()
 const port = 3000;
+app.use(bodyParser.json());
 app.get("/tags", (req, res) => {
     repo.getTags().then(data => {
         console.log(data);
@@ -14,7 +15,7 @@ app.get("/tags", (req, res) => {
         res.send("Server issue idk lol");
     });
 });
-app.put("/tags", jsonParser, (req, res) => {
+app.put("/tags", (req, res) => {
     if (req.body.name) {
         repo.insertTag(req.body.name)
             .then(data => {

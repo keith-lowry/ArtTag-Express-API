@@ -13,8 +13,9 @@ class ArtTagRepository {
     }
     async insertTag(name) {
         const sql = format('INSERT INTO %I.tags (tag_name) VALUES (\'%s\') ON CONFLICT DO NOTHING', schema, name);
-        await query(sql);
-        return false;
+        const res = await query(sql);
+        console.log(res);
+        return true;
     }
     getImagesWithTags(tags) {
         return [];

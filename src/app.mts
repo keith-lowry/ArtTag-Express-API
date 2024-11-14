@@ -3,8 +3,9 @@ import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
 
 const app = express();
-const jsonParser = bodyParser.json()
 const port = 3000;
+
+app.use(bodyParser.json())
 
 app.get("/tags", (req, res) => {
     repo.getTags().then(data => {
@@ -17,11 +18,12 @@ app.get("/tags", (req, res) => {
     })
 })
 
-app.put("/tags", jsonParser, (req, res) => {
+app.put("/tags", (req, res) => {
     if (req.body.name) {
         repo.insertTag(req.body.name)
             .then(data => {
                 res.status(200)
+                // TODO: send backtag id
                 res.send("Success!")
             })
             .catch(err => {

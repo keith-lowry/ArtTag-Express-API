@@ -1,5 +1,7 @@
-import { QueryResult } from "pg";
-import Pool from "pg-pool";
+import { type QueryResult } from "pg"
+import Pool from "pg-pool"
+
+
 
 const pool = new Pool()
 

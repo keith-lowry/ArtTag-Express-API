@@ -1,5 +1,6 @@
-import express from "express";
-import config from './config.json';
+import config from "../config.json" assert { type: 'json' };
+import express, { type Express, type Request, type Response } from "express";
+
 const app = express();
 const port = 3000;
 

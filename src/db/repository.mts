@@ -1,6 +1,6 @@
-import { Tag, Image } from "../types"
+import { type Tag, type Image } from "../types.js"
 
-import { query } from "./pool"
+import { query } from "./pool.mjs"
 
 class ArtTagRepository {
     // handle logging within here

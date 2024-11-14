@@ -9,11 +9,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/pg-pool": "^2.0.6",
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@types/express": "^5.0.0",
     "express": "^4.21.1",
     "pg": "^8.13.1",
     "pg-pool": "^3.7.0",

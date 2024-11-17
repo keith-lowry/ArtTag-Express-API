@@ -7,14 +7,19 @@ class ArtTagRepository {
     // handle logging within here
     async getTags() {
         // NOTE: limit size? meh
-        const sql = format('SELECT * FROM %I.tags', schema);
+        const sql = format('SELECT * FROM %I.tags ORDER BY tag_id asc', schema);
+        const result = await query(sql);
+        return result.rows;
+    }
+    async getTagsAfterId(id) {
+        const sql = format('SELECT * FROM %I.tags WHERE tag_id > %s ORDER BY tag_id asc', schema, id);
         const result = await query(sql);
         return result.rows;
     }
     async insertTag(name) {
         const sql = format('INSERT INTO %I.tags (tag_name) VALUES (\'%s\') ON CONFLICT DO NOTHING', schema, name);
         const res = await query(sql);
-        console.log(res);
+        // console.log(res);
         return true;
     }
     getImagesWithTags(tags) {

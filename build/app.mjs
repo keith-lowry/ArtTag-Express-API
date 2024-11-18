@@ -1,22 +1,23 @@
 import express from "express";
 import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
+import assert from "node:assert";
 const app = express();
 const port = 3000;
 app.use(bodyParser.json());
 app.get("/tags", async (req, res) => {
     try {
         if (req.query.afterid) {
-            if (typeof req.query.afterid != 'string') {
-                res.send(`Invalid query param: ${req.query.afterid}`);
-                return;
-            }
             let id = 0n;
             try {
+                assert.ok(typeof req.query.afterid === 'string');
                 id = BigInt(req.query.afterid);
+                assert.ok(id >= 0, "afterid is less than 0");
             }
             catch (error) {
-                res.sendStatus(400);
+                console.log("error");
+                res.statusCode = 400;
+                res.send("afterid must be a positive integer");
                 return;
             }
             const tags = await repo.getTagsAfterId(id);
@@ -26,24 +27,10 @@ app.get("/tags", async (req, res) => {
         res.send(repo.getTags());
     }
     catch (error) {
-        res.sendStatus(500);
+        res.statusCode = 500;
+        res.send("Something went wrong");
         console.error(error);
     }
-    // // query params: afterid, id
-    // // req.query.queryparamname
-    // if (req.query.afterid) {
-    // //    console.log(req.query.afterid)
-    //    res.send(req.query)
-    //    return
-    // }
-    // repo.getTags().then(data => {
-    //     // console.log(data)
-    //     res.send(data)
-    // })
-    // .catch(err => {
-    //     console.log(err)
-    //     res.send("Server issue idk lol")
-    // })
 });
 app.put("/tags", (req, res) => {
     if (req.body.name) {

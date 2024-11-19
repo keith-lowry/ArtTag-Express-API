@@ -11,10 +11,7 @@ const port = 3000;
 app.use(bodyParser.json())
 
 const createTagIdValidator = (paramName:string) => {
-    return query(paramName).notEmpty().trim().isInt().bail().customSanitizer(value => BigInt(value)).custom(value => value >= 0)
-    // TODO: customsanitizer turning it into BigInt throws syntax error; shouldn't isInt() go first?
-    // does validation BUTTTTT still does sanitization
-    // sanitizers run first, meant to modify input
+    return query(paramName).optional().notEmpty().trim().isInt().bail().customSanitizer(value => BigInt(value)).custom(value => value >= 0)
 }
 
 app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {

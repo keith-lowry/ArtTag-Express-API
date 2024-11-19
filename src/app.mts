@@ -2,6 +2,7 @@ import express from "express";
 import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
 import assert from "node:assert";
+import { query, validationResult } from "express-validator";
 
 const app = express();
 const port = 3000;
@@ -9,27 +10,46 @@ const port = 3000;
 // expect bodies to be in json
 app.use(bodyParser.json())
 
-app.get("/tags", async (req, res) => {
+const createTagIdValidator = (paramName:string) => {
+    return query(paramName).notEmpty().trim().isInt().bail().customSanitizer(value => BigInt(value)).custom(value => value >= 0)
+    // TODO: customsanitizer turning it into BigInt throws syntax error; shouldn't isInt() go first?
+    // does validation BUTTTTT still does sanitization
+    // sanitizers run first, meant to modify input
+}
+
+app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
 
     try {
-        if (req.query.afterid){
-            let id = 0n;
-            try {
-               assert.ok(typeof req.query.afterid === 'string', "req query param is not a string")
-               id = BigInt(req.query.afterid)
-               assert.ok(id >= 0, "afterid is less than 0")
-            }
-            catch (error) {
-                console.log(error)
-                res.statusCode = 400;
-                res.send("afterid must be a positive integer")
+        if (req.query?.after_id){
+            const result = validationResult(req);
+
+            if (result.isEmpty()){
+                const id:bigint = req.query.after_id
+                const data = await repo.getTagsAfterId(id)
+                res.send(data)
                 return
             }
-            const tags = await repo.getTagsAfterId(id)
-            res.send(tags)
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
             return
+            // try {
+            //    assert.ok(typeof req.query.afterid === 'string', "req query param is not a string")
+            //    id = BigInt(req.query.afterid)
+            //    assert.ok(id >= 0, "afterid is less than 0")
+            // }
+            // catch (error) {
+            //     console.log(error)
+            //     res.statusCode = 400;
+            //     res.send("afterid must be a positive integer")
+            //     return
+            // }
+            // const tags = await repo.getTagsAfterId(id)
+            // res.send(tags)
+            // return
         }
-        res.send(repo.getTags())
+        const data = await repo.getTags()
+        res.send(data)
     }
     catch (error) {
         res.statusCode = 500

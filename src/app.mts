@@ -10,12 +10,23 @@ const port = 3000;
 // expect bodies to be in json
 app.use(bodyParser.json())
 
+/**
+ * Get ValidationChain for Tag id query param.
+ * @param paramName Name of query param that is a tag id
+ * @returns ValidationChain
+ */
 const createTagIdValidator = (paramName:string) => {
-    return query(paramName).optional().notEmpty().trim().isInt().bail().customSanitizer(value => BigInt(value)).custom(value => value >= 0)
+    return query(paramName)
+        .optional()
+        .notEmpty()
+        .trim()
+        .isInt()
+        .bail() // fail if not int type
+        .customSanitizer(value => BigInt(value)) // convert to bigint
+        .custom(value => value >= 0)
 }
 
 app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
-
     try {
         if (req.query?.after_id){
             const result = validationResult(req);
@@ -30,20 +41,6 @@ app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
             res.statusCode = 400;
             res.send(result)
             return
-            // try {
-            //    assert.ok(typeof req.query.afterid === 'string', "req query param is not a string")
-            //    id = BigInt(req.query.afterid)
-            //    assert.ok(id >= 0, "afterid is less than 0")
-            // }
-            // catch (error) {
-            //     console.log(error)
-            //     res.statusCode = 400;
-            //     res.send("afterid must be a positive integer")
-            //     return
-            // }
-            // const tags = await repo.getTagsAfterId(id)
-            // res.send(tags)
-            // return
         }
         const data = await repo.getTags()
         res.send(data)
@@ -76,20 +73,15 @@ app.put("/tags", (req, res) => {
     
 })
 
-app.get("/images", (req, res) => {
-    res.send("TODO: GET images endpoint");
-})
-
 // TODO: do not need to suport both put and post; decide architecture!!!!
 app.post("/images", (req, res) => {
+    if (req.body.url) {
+        // validate url
+            // use HEAD to get mime type, make sure its image
+
+    }
     res.send("TODO: POST images endpoint")
 })
-
-app.put("/images", (req, res) => {
-    res.send("TODO: PUT images endpoint")
-    // update image that is already in store, add tags
-})
-
 // TODO: lock POST/PUT/DELETE access behind token
 
 app.get("/images/similar", (req, res) => {
@@ -99,7 +91,6 @@ app.get("/images/similar", (req, res) => {
     // user can provide max distance as query param or in body
 })
 
-// serve
 app.use("/images", express.static("public"))
 
 app.listen(port, () => {

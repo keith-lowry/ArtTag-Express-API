@@ -1,7 +1,6 @@
 import express from "express";
 import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
-import assert from "node:assert";
 import { query, validationResult } from "express-validator";
 
 const app = express();
@@ -9,6 +8,9 @@ const port = 3000;
 
 // expect bodies to be in json
 app.use(bodyParser.json())
+
+// TODO: add general error handler
+// TODO: plan out stuff in diagram
 
 /**
  * Get ValidationChain for Tag id query param.
@@ -53,6 +55,7 @@ app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
 })
 
 app.put("/tags", (req, res) => {
+    // TODO: validate tag name
     if (req.body.name) {
         repo.insertTag(req.body.name)
             .then(data => {

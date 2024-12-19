@@ -28,22 +28,35 @@ const createTagIdValidator = (paramName:string) => {
         .custom(value => value >= 0)
 }
 
-app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
-    try {
-        if (req.query?.after_id){
-            const result = validationResult(req);
+// OLD METHOD when tags had ids
+// app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
+//     try {
+//         if (req.query?.after_id){
+//             const result = validationResult(req);
 
-            if (result.isEmpty()){
-                const id:bigint = req.query.after_id
-                const data = await repo.getTagsAfterId(id)
-                res.send(data)
-                return
-            }
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
-            return
-        }
+//             if (result.isEmpty()){
+//                 const id:bigint = req.query.after_id
+//                 const data = await repo.getTagsAfterId(id)
+//                 res.send(data)
+//                 return
+//             }
+//             console.log(result)
+//             res.statusCode = 400;
+//             res.send(result)
+//             return
+//         }
+//         const data = await repo.getTags()
+//         res.send(data)
+//     }
+//     catch (error) {
+//         res.statusCode = 500
+//         res.send("Something went wrong");
+//         console.error(error);
+//     }
+// })
+
+app.get("/tags", async (req, res) => {
+    try {
         const data = await repo.getTags()
         res.send(data)
     }

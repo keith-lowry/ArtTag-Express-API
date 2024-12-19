@@ -5,6 +5,7 @@ export interface Image {
 }
 
 export interface Tag {
-    tag_id : BigInt,
-    tag_name: string
+    tag : string,
+    time_created: string
+    time_created_epoch: bigint
 }

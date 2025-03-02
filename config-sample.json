@@ -1,0 +1,13 @@
+{
+    "schema" : "<DB schema for queries>",
+    "dbInfo" : {
+        "host" : "<hostname or ip of postgres db server>",
+        "user" : "<uname for postgres account>",
+        "password" : "<pword for postgres account>",
+        "database" : "<DB name for queries>",
+        "port" : 9999,
+        "max" : 10,
+        "idleTimeoutMillis" : 1000,
+        "connectionTimeoutMillis" : 1000
+     }
+ }

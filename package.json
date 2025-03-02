@@ -4,7 +4,9 @@
   "description": "Express.js API for accessing ArtTag database",
   "main": "./build/app.js",
   "scripts": {
-    "start": "node ./build/app.mjs"
+    "start": "node ./build/app.mjs",
+    "watch": "tsc --watch",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",

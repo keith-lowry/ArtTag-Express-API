@@ -1,6 +1,6 @@
-import { type Tag, type Image } from "../types.js"
+import { type Tag, type Image } from "../types.mjs"
 import { query } from "./pool.mjs"
-import config from "../../config.json" assert {type : 'json'}
+import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';
 
 const schema = config.schema

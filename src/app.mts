@@ -1,7 +1,9 @@
 import express from "express";
 import { repo } from "./db/repository.mjs";
 import bodyParser from "body-parser";
-import { query, validationResult } from "express-validator";
+import { query, body, validationResult } from "express-validator";
+// TODO: use multer for handling image uploads
+
 
 const app = express();
 const port = 3000;
@@ -90,9 +92,10 @@ app.put("/tags", (req, res) => {
 })
 
 // TODO: do not need to suport both put and post; decide architecture!!!!
-app.post("/images", (req, res) => {
-    if (req.body.url) {
-        // validate url
+app.post("/images", async (req, res) => {
+    if (req.body.image) {
+        console.log(req.body.image)
+        // validate image
             // use HEAD to get mime type, make sure its image
 
     }

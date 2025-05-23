@@ -1,10 +1,13 @@
 import sharp from "sharp";
+// import phash from "sharp-phash";
 import type { ResizeOptions } from "sharp";
+import phash from "sharp-phash";
 // .mts to specify this as an es module and use top level await
 
 const input = "./goopomancer1.png"
 const output = "./hash.jpg"
-
+const get_hash = phash.default
+// TODO: use phash lib instead
 const opts:ResizeOptions = {
     fit: "fill" // ignore aspect ratio when resizing
 }
@@ -39,6 +42,8 @@ for (let i = 0; i < 8; i++) { // traverse rows
         }
     }
 }
+
+
 // problem i had was that the javascript number type is a floating point
 // with all the issues that includes. leads to wrong hash number after adding such big powers of 2.
 // use BigInt instead.

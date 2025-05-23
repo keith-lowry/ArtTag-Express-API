@@ -10,7 +10,7 @@ const port = 3000;
 app.use(bodyParser.json())
 
 // TODO: add general error handler
-// TODO: plan out stuff in diagram
+// TODO: plan out routes in diagram
 
 /**
  * Get ValidationChain for Tag id query param.

@@ -35,7 +35,7 @@ class ArtTagRepository {
 
     insertImage(filename: string, hash: string): boolean {
         // assert hash is 64 chars long and only contains 0's and 1's
-        return false
+        return false;
     }
 }
 

@@ -112,6 +112,35 @@ app.put("/tags/create", (req, res) => {
     
 })
 
+app.get("/artists/list", createEpochValidator("created_after"), async (req, res) => {
+    try {
+        if (req.query?.created_after) {
+            const result = validationResult(req)
+
+            // created_after query value is ok
+            if (result.isEmpty()){
+                const epoch:number = req.query.created_after
+                const data = await repo.getArtistsCreatedAfter(epoch)
+                res.send(data)
+                return
+            }
+            
+            // query value not ok: bad request
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
+            return
+        }
+        const data = await repo.getArtists()
+        res.send(data)
+    }
+    catch (error) {
+        res.statusCode = 500
+        res.send("Something went wrong");
+        console.error(error);
+    }
+})
+
 // TODO: do not need to suport both put and post; decide architecture!!!!
 app.post("/images", async (req, res) => {
     if (req.body.image) {

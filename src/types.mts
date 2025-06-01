@@ -6,5 +6,10 @@ export interface Image {
 
 export interface Tag {
     tag : string,
-    time_created: string
+    time_created: string // ms since epoch
+}
+
+export interface Artist {
+    artist: string,
+    time_created: string // ms since epoch
 }

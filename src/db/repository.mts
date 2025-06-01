@@ -2,23 +2,22 @@ import { type Tag, type Image } from "../types.mjs"
 import { query } from "./pool.mjs"
 import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';
+import SetCache from "./set-cache.mjs";
 
 const schema = config.schema
 
 class ArtTagRepository {
-    private tags = new Set<Tag>();
 
     // handle logging within here
     async getTags():Promise<Tag[]> {
         // NOTE: limit size? meh
-        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags', schema);
+        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags ORDER BY time_created ASCENDING', schema);
         const result = await query(sql)
-        // this.tags.add(result.rows.map())
         return result.rows
     }
 
     async getTagsCreatedAfter(epoch:number):Promise<Tag[]> {
-        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags WHERE EXTRACT(epoch from time_created) > %s', schema, epoch);
+        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags WHERE EXTRACT(epoch from time_created) > %s ORDER BY time_created ASCENDING', schema, epoch);
         const result = await query(sql);
         return result.rows
     }

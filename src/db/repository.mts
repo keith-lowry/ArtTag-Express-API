@@ -9,13 +9,16 @@ class ArtTagRepository {
     // handle logging within here
     async getTags():Promise<Tag[]> {
         // NOTE: limit size? meh
-        const sql = format('SELECT * FROM %I.tags', schema);
+        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags', schema);
         const result = await query(sql)
         return result.rows
     }
 
-    //extract(EPOCH from time_created)
-
+    async getTagsCreatedAfter(epoch:number):Promise<Tag[]> {
+        const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags WHERE EXTRACT(epoch from time_created) > %s', schema, epoch);
+        const result = await query(sql);
+        return result.rows
+    }
     // async getTagsAfterId(id:bigint):Promise<Tag[]> {
     //     const sql = format('SELECT * FROM %I.tags WHERE tag_id > %s ORDER BY tag_id asc', schema, id);
     //     const result = await query(sql)

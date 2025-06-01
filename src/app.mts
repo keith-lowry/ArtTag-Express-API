@@ -30,6 +30,10 @@ const createTagIdValidator = (paramName:string) => {
         .custom(value => value >= 0)
 }
 
+const createEpochValidator = (paramName:string) => {
+    return query(paramName).optional().notEmpty().trim().isFloat().bail().toFloat().custom(value => value >= 0)
+}
+
 // OLD METHOD when tags had ids
 // app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
 //     try {
@@ -57,8 +61,25 @@ const createTagIdValidator = (paramName:string) => {
 //     }
 // })
 
-app.get("/tags", async (req, res) => {
+app.get("/tags/list", createEpochValidator("created_after"), async (req, res) => {
     try {
+        if (req.query?.created_after) {
+            const result = validationResult(req)
+
+            // created_after query value is ok
+            if (result.isEmpty()){
+                const epoch:number = req.query.created_after
+                const data = await repo.getTagsCreatedAfter(epoch)
+                res.send(data)
+                return
+            }
+            
+            // query value not ok: bad request
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
+            return
+        }
         const data = await repo.getTags()
         res.send(data)
     }
@@ -69,7 +90,7 @@ app.get("/tags", async (req, res) => {
     }
 })
 
-app.put("/tags", (req, res) => {
+app.put("/tags/create", (req, res) => {
     // TODO: validate tag name
     if (req.body.name) {
         repo.insertTag(req.body.name)

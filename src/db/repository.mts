@@ -6,11 +6,14 @@ import format from 'pg-format';
 const schema = config.schema
 
 class ArtTagRepository {
+    private tags = new Set<Tag>();
+
     // handle logging within here
     async getTags():Promise<Tag[]> {
         // NOTE: limit size? meh
         const sql = format('SELECT tag, EXTRACT(epoch from time_created) as time_created FROM %I.tags', schema);
         const result = await query(sql)
+        // this.tags.add(result.rows.map())
         return result.rows
     }
 

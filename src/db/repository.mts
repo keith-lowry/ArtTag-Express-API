@@ -41,13 +41,13 @@ class ArtTagRepository {
     }
 
     async getArtists():Promise<Artist[]> {
-        const sql = format('SELECT name as artist, EXTRACT(epoch from time_created) as time_created FROM %I.artists ORDER BY time_created ASC', schema);
+        const sql = format('SELECT name, EXTRACT(epoch from time_created) as time_created FROM %I.artists ORDER BY time_created ASC', schema);
         const result = await query(sql);
         return result.rows;
     }
 
     async getArtistsCreatedAfter(epoch:number):Promise<Artist[]> {
-        const sql = format('SELECT name as artist, EXTRACT(epoch from time_created) as time_created FROM %I.artists WHERE EXTRACT(epoch from time_created) > %s ORDER BY time_created ASC', schema, epoch);
+        const sql = format('SELECT name, EXTRACT(epoch from time_created) as time_created FROM %I.artists WHERE EXTRACT(epoch from time_created) > %s ORDER BY time_created ASC', schema, epoch);
         const result = await query(sql);
         return result.rows;
     }

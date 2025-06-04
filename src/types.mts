@@ -5,7 +5,7 @@ export interface Image {
 }
 
 export interface Tag {
-    tag : string,
+    name : string,
     time_created: string // ms since epoch
 }
 

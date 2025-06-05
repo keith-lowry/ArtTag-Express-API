@@ -1,5 +1,6 @@
 import express from "express";
 import { repo } from "./db/repository.mjs";
+import { isValidArtistName, isValidTagName } from "./types.mjs";
 import bodyParser from "body-parser";
 import { query, body, validationResult } from "express-validator";
 // TODO: use multer for handling image uploads
@@ -8,58 +9,50 @@ import { query, body, validationResult } from "express-validator";
 const app = express();
 const port = 3000;
 
-// expect bodies to be in json
 app.use(bodyParser.json())
-
-// TODO: add general error handler
-// TODO: plan out routes in diagram
 
 /**
  * Get ValidationChain for Tag id query param.
  * @param paramName Name of query param that is a tag id
  * @returns ValidationChain
  */
-const createTagIdValidator = (paramName:string) => {
-    return query(paramName)
-        .optional()
-        .notEmpty()
-        .trim()
-        .isInt()
-        .bail() // fail if not int type
-        .customSanitizer(value => BigInt(value)) // convert to bigint
-        .custom(value => value >= 0)
-}
+// const createTagIdValidator = (paramName:string) => {
+//     return query(paramName)
+//         .optional()
+//         .notEmpty()
+//         .trim()
+//         .isInt()
+//         .bail() // fail if not int type
+//         .customSanitizer(value => BigInt(value)) // convert to bigint
+//         .custom(value => value >= 0)
+// }
 
 const createEpochValidator = (paramName:string) => {
     return query(paramName).optional().notEmpty().trim().isFloat().bail().toFloat().custom(value => value >= 0)
 }
 
-// OLD METHOD when tags had ids
-// app.get("/tags", createTagIdValidator("after_id"), async (req, res) => {
-//     try {
-//         if (req.query?.after_id){
-//             const result = validationResult(req);
+const createTagListValidator = (bodyParamName: string) => {
+    return body(bodyParamName)
+        .isArray({min: 1, max: 10})
+        .withMessage("must be a non-empty array of 1 to 10 tags to insert")
+        .bail()
+        .customSanitizer(value => {
+            const arr = value as Array<String>;
+            return arr.map((el, _) => {
+                return el.trim()
+            })
+        })
+        .custom(value => {
+            const arr = value as Array<String>;
+            for (let i = 0; i < arr.length; i++) {
+                if (!isValidTagName(arr[i])) {
+                    return Promise.reject(`\'${arr[i]}\' is not a valid tag name`)
+                }
+            }
+            return true;
+        });
+}
 
-//             if (result.isEmpty()){
-//                 const id:bigint = req.query.after_id
-//                 const data = await repo.getTagsAfterId(id)
-//                 res.send(data)
-//                 return
-//             }
-//             console.log(result)
-//             res.statusCode = 400;
-//             res.send(result)
-//             return
-//         }
-//         const data = await repo.getTags()
-//         res.send(data)
-//     }
-//     catch (error) {
-//         res.statusCode = 500
-//         res.send("Something went wrong");
-//         console.error(error);
-//     }
-// })
 
 app.get("/tags/list", createEpochValidator("created_after"), async (req, res) => {
     try {
@@ -86,30 +79,32 @@ app.get("/tags/list", createEpochValidator("created_after"), async (req, res) =>
     catch (error) {
         res.statusCode = 500
         res.send("Something went wrong");
-        console.error(error);
+        console.error("[ERROR] /tags/list:",error);
     }
 })
 
-app.put("/tags/create", (req, res) => {
-    // TODO: validate tag name
-    if (req.body.name) {
-        repo.insertTag(req.body.name)
-            .then(data => {
-                res.status(200)
-                // TODO: send back name and id of newly created tag
-                res.send("Success!")
-            })
-            .catch(err => {
-                console.log(err)
-                res.status(500)
-                res.send("Something went wrong...")
-            })
+app.put("/tags/create", createTagListValidator("tags"),async (req, res) => {
+    try {
+        const result = validationResult(req);
+
+        // tag name failed validation or does not exist
+        if (!result.isEmpty()) {
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
+            return
+        }
+        const succeeded = await repo.insertTags(req.body.tags)
+        if (!succeeded) {
+            throw new Error(`failed to insert tags`)
+        }
+        res.status(200).send()
     }
-    else {
-        res.status(400)
-        res.send("Missing 'name' in JSON body")
+    catch (error) {
+        res.statusCode = 500
+        res.send("Something went wrong");
+        console.error("[ERROR] /tags/create:", error)
     }
-    
 })
 
 app.get("/artists/list", createEpochValidator("created_after"), async (req, res) => {

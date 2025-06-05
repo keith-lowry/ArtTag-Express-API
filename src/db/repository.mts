@@ -4,28 +4,8 @@ import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';
 
 const schema = config.schema
-const TAG_SEPARATOR = " ";
 
 class ArtTagRepository {
-
-    /**
-     * Checks if a given string is a valid tag name that can be stored.
-     * @param tag string
-     * @returns True if tag is a valid tag name.
-     */
-    validTag(tag:string):boolean {
-        return (tag.length <= 50 && !tag.includes(TAG_SEPARATOR));
-    }
-
-    /**
-     * Checks if a given string is a valid artist name that can be stored.
-     * @param artist string
-     * @returns True if artist is a valid artist name.
-     */
-    validArtist(artist:string):boolean{
-        return (artist.length <= 50);
-    }
-
     // handle logging within here
     async getTags():Promise<Tag[]> {
         // NOTE: limit size? meh
@@ -52,12 +32,26 @@ class ArtTagRepository {
         return result.rows;
     }
 
-    async insertTag(name: string): Promise<boolean> {
-        const sql = format('INSERT INTO %I.tags (tag_name) VALUES (\'%s\') ON CONFLICT DO NOTHING', schema, name)
+    async insertTags(tags: string[]): Promise<boolean> {
+        const prepped = tags.map((el, _) => {
+            return `(\'${el}\')`
+        })
+        const sql = format('INSERT INTO %I.tags (tag) VALUES %s ON CONFLICT DO NOTHING', schema, prepped.join(", "))
+        // console.log(sql);
         const res = await query(sql);
         // console.log(res);
         return true;
     }
+
+    // async insertArtist(name: string): Promise<boolean> {
+    //     try {
+
+    //     }
+    //     catch {
+            
+    //     }
+
+    // }
 
     getImagesWithTags(tags:Array<string>):Array<Image> {
         return []

@@ -2,6 +2,7 @@ import { type Tag, type Image, type Artist } from "../types.mjs"
 import { query } from "./pool.mjs"
 import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';
+import type { QueryResult } from "pg";
 
 const schema = config.schema
 
@@ -32,15 +33,25 @@ class ArtTagRepository {
         return result.rows;
     }
 
-    async insertTags(tags: string[]): Promise<boolean> {
+    async insertTags(tags: string[]): Promise<QueryResult<any>> {
         const prepped = tags.map((el, _) => {
             return `(\'${el}\')`
         })
         const sql = format('INSERT INTO %I.tags (tag) VALUES %s ON CONFLICT DO NOTHING', schema, prepped.join(", "))
         // console.log(sql);
-        const res = await query(sql);
+        return await query(sql);
         // console.log(res);
-        return true;
+    }
+
+    async insertArtists(artists: string[]): Promise<QueryResult<any>> {
+        const prepped = artists.map((el, _) => {
+            return `(\'${el}\')`
+        })
+        const sql = format('INSERT INTO %I.artists (name) VALUES %s ON CONFLICT DO NOTHING', schema, prepped.join(", "))
+        // console.log(sql);
+        return await query(sql);
+        // console.log(res);
+        // return true;
     }
 
     // async insertArtist(name: string): Promise<boolean> {

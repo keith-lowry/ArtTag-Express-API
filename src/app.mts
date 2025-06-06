@@ -53,6 +53,28 @@ const createTagListValidator = (bodyParamName: string) => {
         });
 }
 
+const createArtistListValidator = (bodyParamName:string) => {
+    return body(bodyParamName)
+        .isArray({min: 1, max: 10})
+        .withMessage("must be a non-empty array of 1 to 10 artists to insert")
+        .bail()
+        .customSanitizer(value => {
+            const arr = value as Array<String>;
+            return arr.map((el, _) => {
+                return el.trim()
+            })
+        })
+        .custom(value => {
+            const arr = value as Array<String>;
+            for (let i = 0; i < arr.length; i++) {
+                if (!isValidArtistName(arr[i])) {
+                    return Promise.reject(`\'${arr[i]}\' is not a valid tag name`)
+                }
+            }
+            return true;
+        });
+}
+
 
 app.get("/tags/list", createEpochValidator("created_after"), async (req, res) => {
     try {
@@ -94,10 +116,7 @@ app.put("/tags/create", createTagListValidator("tags"),async (req, res) => {
             res.send(result)
             return
         }
-        const succeeded = await repo.insertTags(req.body.tags)
-        if (!succeeded) {
-            throw new Error(`failed to insert tags`)
-        }
+        await repo.insertTags(req.body.tags)
         res.status(200).send()
     }
     catch (error) {
@@ -136,7 +155,29 @@ app.get("/artists/list", createEpochValidator("created_after"), async (req, res)
     }
 })
 
-// TODO: do not need to suport both put and post; decide architecture!!!!
+app.put("/artists/create", createArtistListValidator("artists"), async (req, res) => {
+    try {
+        const result = validationResult(req);
+
+        // artist name failed validation or does not exist
+        if (!result.isEmpty()) {
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
+            return
+        }
+        
+        await repo.insertArtists(req.body.artists)
+        res.status(200).send()
+    }
+    catch (error) {
+        res.statusCode = 500
+        res.send("Something went wrong");
+        console.error("[ERROR] /artists/create:", error)
+    }
+})
+
+
 app.post("/images", async (req, res) => {
     if (req.body.image) {
         console.log(req.body.image)

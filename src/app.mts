@@ -1,82 +1,29 @@
 import express from "express";
 import { repo } from "./db/repository.mjs";
-import { isValidArtistName, isValidTagName } from "./types.mjs";
+// import { isValidArtistName, isValidTagName } from "./types.mjs";
+import multer from "multer";
 import bodyParser from "body-parser";
 import { query, body, validationResult } from "express-validator";
-// TODO: use multer for handling image uploads
+import validators from "./validators.mjs";
+import config from "../config.json" with { type: 'json' };
+
+// TODO: use proper express error handling
+// https://expressjs.com/en/guide/error-handling.html
 
 
 const app = express();
 const port = 3000;
 
+const imageStorage = multer.memoryStorage()
+const imageUpload = multer({storage : imageStorage, limits : {
+    fileSize: config.maxFileSizeMB * 1000000,
+    files: 1
+}})
+
 app.use(bodyParser.json())
 
-/**
- * Get ValidationChain for Tag id query param.
- * @param paramName Name of query param that is a tag id
- * @returns ValidationChain
- */
-// const createTagIdValidator = (paramName:string) => {
-//     return query(paramName)
-//         .optional()
-//         .notEmpty()
-//         .trim()
-//         .isInt()
-//         .bail() // fail if not int type
-//         .customSanitizer(value => BigInt(value)) // convert to bigint
-//         .custom(value => value >= 0)
-// }
 
-const createEpochValidator = (paramName:string) => {
-    return query(paramName).optional().notEmpty().trim().isFloat().bail().toFloat().custom(value => value >= 0)
-}
-
-const createTagListValidator = (bodyParamName: string) => {
-    return body(bodyParamName)
-        .isArray({min: 1, max: 10})
-        .withMessage("must be a non-empty array of 1 to 10 tags to insert")
-        .bail()
-        .customSanitizer(value => {
-            const arr = value as Array<String>;
-            return arr.map((el, _) => {
-                return el.trim()
-            })
-        })
-        .custom(value => {
-            const arr = value as Array<String>;
-            for (let i = 0; i < arr.length; i++) {
-                if (!isValidTagName(arr[i])) {
-                    return Promise.reject(`\'${arr[i]}\' is not a valid tag name`)
-                }
-            }
-            return true;
-        });
-}
-
-const createArtistListValidator = (bodyParamName:string) => {
-    return body(bodyParamName)
-        .isArray({min: 1, max: 10})
-        .withMessage("must be a non-empty array of 1 to 10 artists to insert")
-        .bail()
-        .customSanitizer(value => {
-            const arr = value as Array<String>;
-            return arr.map((el, _) => {
-                return el.trim()
-            })
-        })
-        .custom(value => {
-            const arr = value as Array<String>;
-            for (let i = 0; i < arr.length; i++) {
-                if (!isValidArtistName(arr[i])) {
-                    return Promise.reject(`\'${arr[i]}\' is not a valid tag name`)
-                }
-            }
-            return true;
-        });
-}
-
-
-app.get("/tags/list", createEpochValidator("created_after"), async (req, res) => {
+app.get("/tags/list", validators.epoch("created_after"), async (req, res) => {
     try {
         if (req.query?.created_after) {
             const result = validationResult(req)
@@ -105,7 +52,7 @@ app.get("/tags/list", createEpochValidator("created_after"), async (req, res) =>
     }
 })
 
-app.put("/tags/create", createTagListValidator("tags"),async (req, res) => {
+app.put("/tags/create", validators.taglist("tags"),async (req, res) => {
     try {
         const result = validationResult(req);
 
@@ -126,7 +73,7 @@ app.put("/tags/create", createTagListValidator("tags"),async (req, res) => {
     }
 })
 
-app.get("/artists/list", createEpochValidator("created_after"), async (req, res) => {
+app.get("/artists/list", validators.epoch("created_after"), async (req, res) => {
     try {
         if (req.query?.created_after) {
             const result = validationResult(req)
@@ -155,7 +102,7 @@ app.get("/artists/list", createEpochValidator("created_after"), async (req, res)
     }
 })
 
-app.put("/artists/create", createArtistListValidator("artists"), async (req, res) => {
+app.put("/artists/create", validators.artistlist("artists"), async (req, res) => {
     try {
         const result = validationResult(req);
 
@@ -178,14 +125,35 @@ app.put("/artists/create", createArtistListValidator("artists"), async (req, res
 })
 
 
-app.post("/images", async (req, res) => {
-    if (req.body.image) {
-        console.log(req.body.image)
-        // validate image
-            // use HEAD to get mime type, make sure its image
+app.post("/images/create", 
+    imageUpload.single("image"), 
+    validators.artist("artist", true), 
+    validators.taglist("tags", true), 
+    validators.srcUrl("src", true),
+    async (req, res) => {
 
+    try {
+        if (!req.file) {
+            res.status(400).send("no file attached");
+            return;
+        }
+
+        const result = validationResult(req);
+
+        // params failed validation
+        if (!result.isEmpty()) {
+            console.log(result)
+            res.statusCode = 400;
+            res.send(result)
+            return
+        }
+
+        res.status(200).send("TODO: POST images endpoint")
     }
-    res.send("TODO: POST images endpoint")
+    catch (error) {
+        res.status(500).send("Something went wrong");
+        console.error("[ERROR] /images/create:", error)
+    }
 })
 // TODO: lock POST/PUT/DELETE access behind token
 

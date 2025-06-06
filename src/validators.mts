@@ -1,16 +1,26 @@
 import { query, body } from "express-validator";
 import { isValidArtistName, isValidTagName } from "./types.mjs";
+import config from "../config.json" with {type : 'json'}
 
 const createEpochValidator = (paramName:string) => {
     return query(paramName).optional().notEmpty().trim().isFloat().bail().toFloat().custom(value => value >= 0)
 }
 
-const createTagListValidator = (bodyParamName: string, coerce: boolean = false) => {
+const createTagListValidator = (bodyParamName: string, isForm: boolean = false) => {
 
     const chain = body(bodyParamName)
 
-    if (coerce) {
-        chain.toArray()
+    // handle different formats param can be passed in formData
+    if (isForm) {
+        chain.customSanitizer(value => {
+            // Option 1: separate key value pairs with same key -> parsed to array alrdy
+            if (Array.isArray(value)) {
+                return value;
+            }
+            // Option 2: single key value pair with individual tags separated by TAG_SEPARATOR
+            const val = value as String
+            return val.split(config.tagSeparator)
+        })
     }
 
     chain.isArray({min: 1, max: 10})

@@ -138,6 +138,7 @@ app.post("/images/create",
             return;
         }
 
+
         const result = validationResult(req);
 
         // params failed validation
@@ -145,6 +146,14 @@ app.post("/images/create",
             console.log(result)
             res.statusCode = 400;
             res.send(result)
+            return
+        }
+
+        // console.log(req.body.tags)
+        // console.log(req.file.mimetype)
+        
+        if (!req.file.mimetype.startsWith("image/", 0)) {
+            res.status(400).send("file must be an image")
             return
         }
 

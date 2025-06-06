@@ -10,5 +10,6 @@
         "idleTimeoutMillis" : 1000,
         "connectionTimeoutMillis" : 1000
      },
-     "maxFileSizeMB" : 5
+     "maxFileSizeMB" : 5,
+     "tagSeparator" : "<separator>"
  }

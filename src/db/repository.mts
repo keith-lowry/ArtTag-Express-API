@@ -119,7 +119,7 @@ class ArtTagRepository {
                     (src_url, artist, hash, hash_slice_1, hash_slice_2, hash_slice_3, hash_slice_4, file_type) 
                     VALUES (%s, %s, '%s', '%s', '%s', '%s', '%s', '%s') RETURNING *`
             const sql = format.withArray(template, args)
-            console.log(sql)
+            // console.log(sql)
             const imageRes = await query(sql);
             const row = imageRes.rows[0]
             // console.log(qres)

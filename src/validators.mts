@@ -27,10 +27,18 @@ const createTagListValidator = (bodyParamName: string, isForm: boolean = false) 
         .withMessage("must be a non-empty array of 1 to 10 tags to insert")
         .bail()
         .customSanitizer(value => {
+            const set = new Set<String>();
+            const newArr = new Array<String>();
             const arr = value as Array<String>;
-            return arr.map((el, _) => {
-                return el.trim()
+            // trim each tag and remove duplicates
+            arr.forEach((val, _) => {
+                val = val.trim();
+                if (!set.has(val)) {
+                    set.add(val)
+                    newArr.push(val)
+                }
             })
+            return newArr;
         })
         .custom(value => {
             const arr = value as Array<String>;
@@ -50,10 +58,22 @@ const createArtistListValidator = (bodyParamName:string) => {
         .withMessage("must be a non-empty array of 1 to 10 artists to insert")
         .bail()
         .customSanitizer(value => {
+            const set = new Set<String>();
+            const newArr = new Array<String>();
             const arr = value as Array<String>;
-            return arr.map((el, _) => {
-                return el.trim()
+            // trim each artist val and remove duplicates
+            arr.forEach((val, _) => {
+                val = val.trim();
+                if (!set.has(val)) {
+                    set.add(val)
+                    newArr.push(val)
+                }
             })
+            return newArr;
+            // const arr = value as Array<String>;
+            // return arr.map((el, _) => {
+            //     return el.trim()
+            // })
         })
         .custom(value => {
             const arr = value as Array<String>;
@@ -70,8 +90,6 @@ const createSourceUrlValidator= (urlParamName:string, optional: boolean = false)
     const chain = body(urlParamName)
         .isURL()
         .withMessage("invalid url")
-        .bail()
-        .customSanitizer(value => new URL(value));
 
     if (optional) {
         chain.optional()

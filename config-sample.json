@@ -11,5 +11,6 @@
         "connectionTimeoutMillis" : 1000
      },
      "maxFileSizeMB" : 5,
-     "tagSeparator" : "<separator>"
+     "tagSeparator" : "<separator>",
+     "imagesFolder" : "<full path to folder to store images in>"
  }

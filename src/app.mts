@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import { query, body, validationResult } from "express-validator";
 import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
+import fs from "fs";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -14,6 +15,14 @@ import config from "../config.json" with { type: 'json' };
 const app = express();
 const port = 3000;
 
+if (!fs.existsSync(config.imagesFolder)) {
+    fs.mkdirSync(config.imagesFolder);
+    console.info(`[INFO] Made images folder ${config.imagesFolder}`)
+}
+else {
+    console.info(`[INFO] Using images folder ${config.imagesFolder}`)
+}
+
 const imageStorage = multer.memoryStorage()
 const imageUpload = multer({storage : imageStorage, limits : {
     fileSize: config.maxFileSizeMB * 1000000,
@@ -21,6 +30,7 @@ const imageUpload = multer({storage : imageStorage, limits : {
 }})
 
 app.use(bodyParser.json())
+app.use('/images/get', express.static(config.imagesFolder))
 
 
 app.get("/tags/list", validators.epoch("created_after"), async (req, res) => {
@@ -113,6 +123,7 @@ app.put("/artists/create", validators.artistlist("artists"), async (req, res) =>
             res.send(result)
             return
         }
+        console.log(req.body.artists)
         
         await repo.insertArtists(req.body.artists)
         res.status(200).send()
@@ -133,15 +144,18 @@ app.post("/images/create",
     async (req, res) => {
 
     try {
+        // File validations
         if (!req.file) {
             res.status(400).send("no file attached");
             return;
         }
+        if (!req.file.mimetype.startsWith("image/", 0)) {
+            res.status(400).send("file must be an image")
+            return
+        }
 
-
+        // Check text params are valid
         const result = validationResult(req);
-
-        // params failed validation
         if (!result.isEmpty()) {
             console.log(result)
             res.statusCode = 400;
@@ -151,13 +165,32 @@ app.post("/images/create",
 
         // console.log(req.body.tags)
         // console.log(req.file.mimetype)
-        
-        if (!req.file.mimetype.startsWith("image/", 0)) {
-            res.status(400).send("file must be an image")
+
+        // vvv TODO: move this check to tags list validator vvv
+        const tagsExist = await repo.hasTags(req.body.tags)
+        if (!tagsExist) {
+            res.status(400)
+                .send("at least one provided tag does not exist");
             return
         }
+        
+        if (req.body.artist) {
+            const artistExists = await repo.hasArtist(req.body.artist)
+            if (!artistExists) {
+                res.status(400)
+                .send(`provided artist does not exist`)
+                return
+            }
+        }
 
-        res.status(200).send("TODO: POST images endpoint")
+        const filetype = req.file.mimetype.split("/")[1].toLowerCase()
+
+        // TODO: replace with call to phash
+        const hash = "1111111111111111111111111111111111111111111111111111111111111111"
+
+        const qres = await repo.insertImage(req.file.buffer, filetype, req.body.tags, hash, req.body.artist, req.body.src)
+        // console.log(qres)
+        res.status(200).send(qres)
     }
     catch (error) {
         res.status(500).send("Something went wrong");
@@ -176,6 +209,5 @@ app.get("/images/similar", (req, res) => {
 app.use("/images", express.static("public"))
 
 app.listen(port, () => {
-    console.log(`API: listening on port ${port}`);
-    // console.log(config["postgres"]);
+    console.info(`[INFO] API listening on port ${port}`);
 })

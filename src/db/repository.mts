@@ -122,16 +122,24 @@ class ArtTagRepository {
 
 
             // Step 1: insert row to images table
-            const template = `INSERT INTO %I.images 
+            let template = `INSERT INTO %I.images 
                     (src_url, artist, hash, hash_slice_1, hash_slice_2, hash_slice_3, hash_slice_4, file_type, nsfw) 
                     VALUES (%s, %s, '%s', '%s', '%s', '%s', '%s', '%s', %s) RETURNING *`
-            const sql = format.withArray(template, args)
+            let sql = format.withArray(template, args)
             // console.log(sql)
             const imageRes = await query(sql);
             const row = imageRes.rows[0]
+            // const id = row.image_id
             // console.log(qres)
             
             // Step 2: add rows to tagged_images table
+            template = `INSERT INTO %I.tagged_images (tag, image_id) VALUES %s`
+            const new_rows = tags.map((tag, _) => {
+                return `('${tag}', ${row.image_id})`
+            })
+            sql = format(template, schema, new_rows.join(", "))
+            // console.log(sql)
+            await query(sql);
 
 
             // Step 3: try to save file to disk

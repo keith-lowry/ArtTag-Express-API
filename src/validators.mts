@@ -9,6 +9,9 @@ const createEpochValidator = (paramName:string) => {
 const createTagListValidator = (bodyParamName: string, isForm: boolean = false) => {
 
     const chain = body(bodyParamName)
+        .exists()
+        .bail()
+        .withMessage("tags list is missing")
 
     // handle different formats param can be passed in formData
     if (isForm) {
@@ -53,7 +56,7 @@ const createTagListValidator = (bodyParamName: string, isForm: boolean = false) 
 }
 
 const createArtistListValidator = (bodyParamName:string) => {
-    return body(bodyParamName)
+    return body(bodyParamName).exists()
         .isArray({min: 1, max: 10})
         .withMessage("must be a non-empty array of 1 to 10 artists to insert")
         .bail()

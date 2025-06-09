@@ -20,10 +20,10 @@ const port = 3000;
 
 if (!fs.existsSync(config.imagesFolder)) {
     fs.mkdirSync(config.imagesFolder);
-    console.info(`[INFO] Made images folder ${config.imagesFolder}`)
+    console.info(`[STARTUP] Made images folder ${config.imagesFolder}`)
 }
 else {
-    console.info(`[INFO] Using images folder ${config.imagesFolder}`)
+    console.info(`[STARTUP] Using images folder ${config.imagesFolder}`)
 }
 
 const imageStorage = multer.memoryStorage()
@@ -244,5 +244,5 @@ app.get("/images/similar", (req, res) => {
 app.use("/images", express.static("public"))
 
 app.listen(port, () => {
-    console.info(`[INFO] API listening on port ${port}`);
+    console.info(`[READY] API listening on port ${port}`);
 })

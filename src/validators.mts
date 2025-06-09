@@ -116,12 +116,22 @@ const createArtistValidator = (artistParamName:string, optional: boolean = false
     return chain;
 }
 
+const createBoolValidator = (bodyParamName: string, optional: boolean = false) => {
+    const chain = body(bodyParamName).isBoolean().toBoolean()
+
+    if (optional) {
+        chain.optional()
+    }
+    return chain
+}
+
 const validators = Object.freeze({
     taglist : createTagListValidator,
     epoch : createEpochValidator,
     artist: createArtistValidator,
     artistlist: createArtistListValidator,
-    srcUrl: createSourceUrlValidator
+    srcUrl: createSourceUrlValidator,
+    bool: createBoolValidator
 })
 
 

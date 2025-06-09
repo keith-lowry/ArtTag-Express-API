@@ -1,12 +1,15 @@
 import express from "express";
+import type { RequestHandler, ErrorRequestHandler } from "express";
 import { repo } from "./db/repository.mjs";
 // import { isValidArtistName, isValidTagName } from "./types.mjs";
 import multer from "multer";
+import { MulterError } from "multer";
 import bodyParser from "body-parser";
 import { query, body, validationResult } from "express-validator";
 import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
+import { error } from "console";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -27,7 +30,37 @@ const imageStorage = multer.memoryStorage()
 const imageUpload = multer({storage : imageStorage, limits : {
     fileSize: config.maxFileSizeMB * 1000000,
     files: 1
-}})
+}}).single("image")
+
+const handleUploadParsing:RequestHandler = (req, res, next) => {
+    imageUpload(req, res, (err) => {
+        // NOT OK: something went wrong with img upload
+        if (err instanceof multer.MulterError) {
+            const e = err as multer.MulterError
+            if (e.code === 'LIMIT_FILE_SIZE') {
+                console.info(`[INFO] Rejected file greater than ${config.maxFileSizeMB}MB in size`)
+                res.status(413).send(`Your file was larger than the max file size of ${config.maxFileSizeMB}MB`)
+                return
+            }
+            if (e.code === 'LIMIT_FILE_COUNT') {
+                console.info('[INFO] Received request with more than one file')
+                res.status(400).send('Only one image file is expected')
+                return
+            }
+            console.log(err)
+            res.status(500).send("Oops! Something unexpected happened")
+            return
+        }
+        else if (err) {
+            res.status(500).send("Oops! Something unexpected happened")
+            console.log(err)
+            return
+        }
+
+        // OK: go to next middleware
+        next();
+    })
+}
 
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
@@ -137,10 +170,12 @@ app.put("/artists/create", validators.artistlist("artists"), async (req, res) =>
 
 
 app.post("/images/create", 
-    imageUpload.single("image"), 
+    // imageUpload.single("image"), 
+    handleUploadParsing,
     validators.artist("artist", true), 
     validators.taglist("tags", true), 
     validators.srcUrl("src", true),
+    validators.bool("nsfw", true),
     async (req, res) => {
 
     try {
@@ -188,7 +223,7 @@ app.post("/images/create",
         // TODO: replace with call to phash
         const hash = "1111111111111111111111111111111111111111111111111111111111111111"
 
-        const qres = await repo.insertImage(req.file.buffer, filetype, req.body.tags, hash, req.body.artist, req.body.src)
+        const qres = await repo.insertImage(req.file.buffer, filetype, req.body.tags, hash, req.body.artist, req.body.src, req.body.nsfw)
         // console.log(qres)
         res.status(200).send(qres)
     }

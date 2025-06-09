@@ -78,12 +78,13 @@ class ArtTagRepository {
         return await query(sql);
     }
 
-    async insertImage(file: Buffer<ArrayBufferLike>, 
+    async insertImage(file: Buffer, 
             filetype: string, 
             tags:String[], 
             hash: String, 
-            artist: string | null = null, 
-            url: string | null = null): Promise<Array<string>> {
+            artist: string | undefined = undefined, 
+            url: string | undefined = undefined,
+            nsfw: boolean | undefined = false): Promise<Array<string>> {
         try {
             if (!url) {
                 url = "NULL";
@@ -98,6 +99,11 @@ class ArtTagRepository {
             else {
                 artist = `'${artist}'`
             }
+
+            if (nsfw === undefined) {
+                nsfw = false
+            }
+
             const args = [
                 schema,
                 url,
@@ -107,7 +113,8 @@ class ArtTagRepository {
                 hash.substring(16, 32),
                 hash.substring(32, 48),
                 hash.substring(48, 64),
-                filetype
+                filetype,
+                String(nsfw)
             ]
 
             // begin transaction
@@ -116,8 +123,8 @@ class ArtTagRepository {
 
             // Step 1: insert row to images table
             const template = `INSERT INTO %I.images 
-                    (src_url, artist, hash, hash_slice_1, hash_slice_2, hash_slice_3, hash_slice_4, file_type) 
-                    VALUES (%s, %s, '%s', '%s', '%s', '%s', '%s', '%s') RETURNING *`
+                    (src_url, artist, hash, hash_slice_1, hash_slice_2, hash_slice_3, hash_slice_4, file_type, nsfw) 
+                    VALUES (%s, %s, '%s', '%s', '%s', '%s', '%s', '%s', %s) RETURNING *`
             const sql = format.withArray(template, args)
             // console.log(sql)
             const imageRes = await query(sql);

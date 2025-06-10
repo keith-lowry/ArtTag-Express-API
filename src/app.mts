@@ -32,6 +32,15 @@ const imageUpload = multer({storage : imageStorage, limits : {
     files: 1
 }}).single("image")
 
+/**
+ * Handles the parsing of a multipart form data request body using
+ * multer. Breaks the chain and sends an error code to client 
+ * if something goes wrong.
+ * 
+ * @param req Request
+ * @param res Response
+ * @param next Next middleware in chain
+ */
 const handleUploadParsing:RequestHandler = (req, res, next) => {
     imageUpload(req, res, (err) => {
         // NOT OK: something went wrong with img upload
@@ -62,27 +71,38 @@ const handleUploadParsing:RequestHandler = (req, res, next) => {
     })
 }
 
+/**
+ * Middleware to check if validation result is not empty. Stops
+ * chain and sends 400 to client if true.
+ * @param req Request
+ * @param res Response
+ * @param next Next middleware in chain
+ */
+const handleValidationCheck:RequestHandler = (req, res, next) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+        // console.log(result)
+        res.statusCode = 400;
+        res.send(result)
+        return
+    }
+    next();
+}
+
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
 
 
-app.get("/tags/list", validators.epoch("created_after"), async (req, res) => {
+app.get("/tags/list", 
+    validators.epoch("created_after"), 
+    handleValidationCheck, 
+    async (req, res) => {
+
     try {
         if (req.query?.created_after) {
-            const result = validationResult(req)
-
-            // created_after query value is ok
-            if (result.isEmpty()){
-                const epoch:number = req.query.created_after
-                const data = await repo.getTagsCreatedAfter(epoch)
-                res.send(data)
-                return
-            }
-            
-            // query value not ok: bad request
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
+            const epoch:number = Number(req.query.created_after)
+            const data = await repo.getTagsCreatedAfter(epoch)
+            res.send(data)
             return
         }
         const data = await repo.getTags()
@@ -95,17 +115,12 @@ app.get("/tags/list", validators.epoch("created_after"), async (req, res) => {
     }
 })
 
-app.put("/tags/create", validators.taglist("tags"),async (req, res) => {
-    try {
-        const result = validationResult(req);
+app.put("/tags/create", 
+    validators.taglist("tags"), 
+    handleValidationCheck, 
+    async (req, res) => {
 
-        // tag name failed validation or does not exist
-        if (!result.isEmpty()) {
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
-            return
-        }
+    try {
         await repo.insertTags(req.body.tags)
         res.status(200).send()
     }
@@ -116,23 +131,16 @@ app.put("/tags/create", validators.taglist("tags"),async (req, res) => {
     }
 })
 
-app.get("/artists/list", validators.epoch("created_after"), async (req, res) => {
+app.get("/artists/list",
+    validators.epoch("created_after"), 
+    handleValidationCheck,
+    async (req, res) => {
+
     try {
         if (req.query?.created_after) {
-            const result = validationResult(req)
-
-            // created_after query value is ok
-            if (result.isEmpty()){
-                const epoch:number = req.query.created_after
-                const data = await repo.getArtistsCreatedAfter(epoch)
-                res.send(data)
-                return
-            }
-            
-            // query value not ok: bad request
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
+            const epoch:number = Number(req.query.created_after)
+            const data = await repo.getArtistsCreatedAfter(epoch)
+            res.send(data)
             return
         }
         const data = await repo.getArtists()
@@ -145,18 +153,22 @@ app.get("/artists/list", validators.epoch("created_after"), async (req, res) => 
     }
 })
 
-app.put("/artists/create", validators.artistlist("artists"), async (req, res) => {
-    try {
-        const result = validationResult(req);
+app.put("/artists/create", 
+    validators.artistlist("artists"), 
+    handleValidationCheck, 
+    async (req, res) => {
 
-        // artist name failed validation or does not exist
-        if (!result.isEmpty()) {
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
-            return
-        }
-        console.log(req.body.artists)
+    try {
+        // const result = validationResult(req);
+
+        // // artist name failed validation or does not exist
+        // if (!result.isEmpty()) {
+        //     console.log(result)
+        //     res.statusCode = 400;
+        //     res.send(result)
+        //     return
+        // }
+        // console.log(req.body.artists)
         
         await repo.insertArtists(req.body.artists)
         res.status(200).send()
@@ -176,6 +188,7 @@ app.post("/images/create",
     validators.taglist("tags", true), 
     validators.srcUrl("src", true),
     validators.bool("nsfw", true),
+    handleValidationCheck,
     async (req, res) => {
 
     try {
@@ -190,19 +203,16 @@ app.post("/images/create",
         }
 
         // Check text params are valid
-        const result = validationResult(req);
-        if (!result.isEmpty()) {
-            console.log(result)
-            res.statusCode = 400;
-            res.send(result)
-            return
-        }
-
-        // console.log(req.body.tags)
-        // console.log(req.file.mimetype)
+        // const result = validationResult(req);
+        // if (!result.isEmpty()) {
+        //     console.log(result)
+        //     res.statusCode = 400;
+        //     res.send(result)
+        //     return
+        // }
 
         // vvv TODO: move this check to tags list validator vvv
-        const tagsExist = await repo.hasTags(req.body.tags)
+        const tagsExist = await repo.hasTags(req.body.tags) // make sure provided tags are in DB
         if (!tagsExist) {
             res.status(400)
                 .send("at least one provided tag does not exist");
@@ -210,7 +220,7 @@ app.post("/images/create",
         }
         
         if (req.body.artist) {
-            const artistExists = await repo.hasArtist(req.body.artist)
+            const artistExists = await repo.hasArtist(req.body.artist) // make sure provided artist is in DB
             if (!artistExists) {
                 res.status(400)
                 .send(`provided artist does not exist`)
@@ -232,7 +242,6 @@ app.post("/images/create",
         console.error("[ERROR] /images/create:", error)
     }
 })
-// TODO: lock POST/PUT/DELETE access behind token
 
 app.get("/images/similar", (req, res) => {
     res.send("TODO: GET similar endpoint");

@@ -3,7 +3,16 @@ import { isValidArtistName, isValidTagName } from "./types.mjs";
 import config from "../config.json" with {type : 'json'}
 
 const createEpochValidator = (paramName:string) => {
-    return query(paramName).optional().notEmpty().trim().isFloat().bail().toFloat().custom(value => value >= 0)
+    return query(paramName)
+        .optional()
+        .notEmpty()
+        .trim().
+        isFloat()
+        .bail()
+        .withMessage("must be float value")
+        .toFloat()
+        .custom(value => value >= 0)
+        .withMessage("must be greater than or equal to 0")
 }
 
 const createTagListValidator = (bodyParamName: string, isForm: boolean = false) => {

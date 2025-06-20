@@ -12,5 +12,6 @@
      },
      "maxFileSizeMB" : 5,
      "tagSeparator" : "<separator>",
-     "imagesFolder" : "<full path to folder to store images in>"
+     "imagesFolder" : "<full path to folder to store images in>",
+     "maxArrLen" : 50
  }

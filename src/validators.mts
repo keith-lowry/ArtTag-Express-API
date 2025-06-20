@@ -15,7 +15,7 @@ const createEpochValidator = (paramName:string) => {
         .withMessage("must be greater than or equal to 0")
 }
 
-const createTagListValidator = (bodyParamName: string, isForm: boolean = false) => {
+const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: boolean = false) => {
 
     const chain = body(bodyParamName)
         .exists()
@@ -35,7 +35,7 @@ const createTagListValidator = (bodyParamName: string, isForm: boolean = false) 
         })
     }
 
-    chain.isArray({min: 1, max: 10})
+    chain.isArray({min: 1, max: maxSize})
         .withMessage("must be a non-empty array of 1 to 10 tags to insert")
         .bail()
         .customSanitizer(value => {
@@ -64,9 +64,9 @@ const createTagListValidator = (bodyParamName: string, isForm: boolean = false) 
     return chain;
 }
 
-const createArtistListValidator = (bodyParamName:string) => {
+const createArtistListValidator = (bodyParamName:string, maxSize: number) => {
     return body(bodyParamName).exists()
-        .isArray({min: 1, max: 10})
+        .isArray({min: 1, max: maxSize})
         .withMessage("must be a non-empty array of 1 to 10 artists to insert")
         .bail()
         .customSanitizer(value => {

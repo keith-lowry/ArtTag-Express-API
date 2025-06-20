@@ -116,7 +116,7 @@ app.get("/tags/list",
 })
 
 app.put("/tags/create", 
-    validators.taglist("tags"), 
+    validators.taglist("tags", config.maxArrLen), 
     handleValidationCheck, 
     async (req, res) => {
 
@@ -154,7 +154,7 @@ app.get("/artists/list",
 })
 
 app.put("/artists/create", 
-    validators.artistlist("artists"), 
+    validators.artistlist("artists", config.maxArrLen), 
     handleValidationCheck, 
     async (req, res) => {
 
@@ -185,7 +185,7 @@ app.post("/images/create",
     // imageUpload.single("image"), 
     handleUploadParsing,
     validators.artist("artist", true), 
-    validators.taglist("tags", true), 
+    validators.taglist("tags", config.maxArrLen, true), 
     validators.srcUrl("src", true),
     validators.bool("nsfw", true),
     handleValidationCheck,

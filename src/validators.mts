@@ -67,7 +67,7 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
 const createArtistListValidator = (bodyParamName:string, maxSize: number) => {
     return body(bodyParamName).exists()
         .isArray({min: 1, max: maxSize})
-        .withMessage("must be a non-empty array of 1 to 10 artists to insert")
+        .withMessage(`must be a non-empty array of 1 to ${maxSize} artists to insert`)
         .bail()
         .customSanitizer(value => {
             const set = new Set<String>();

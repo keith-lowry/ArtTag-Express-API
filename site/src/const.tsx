@@ -1,9 +1,4 @@
 export const pubImages = [
-    // "/beaniefront.jpeg",
-    // "/beanieside.jpeg",
-    // "/musmol.jpg",
-    // "/muwhy.png",
-    // "/p.jpg"
     "1.jpg",
     "2.jpg",
     "3.png",

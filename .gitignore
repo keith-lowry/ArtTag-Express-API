@@ -4,8 +4,5 @@ public/*
 Caddyfile
 build/*
 images
-<<<<<<< HEAD
 .DS_Store
-=======
 package-lock.json
->>>>>>> a80432219e93cd224d431e11e97724627b76d92e

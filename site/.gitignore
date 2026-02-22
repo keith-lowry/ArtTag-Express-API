@@ -1,0 +1,8 @@
+config.json
+node_modules/*
+public/*
+Caddyfile
+build/*
+images
+.DS_Store
+package-lock.json

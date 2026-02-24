@@ -10,6 +10,7 @@ import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error } from "console";
+import { isString } from "./types.mjs";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -249,6 +250,90 @@ app.get("/images/similar", (req, res) => {
     // default: very very close distance (<= 2) to find duplicates
     // user can provide max distance as query param or in body
 })
+
+const xPostLinkRe = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/ // verify x post link
+const bskyPostLinkRe = /^https:\/\/bsky.app\/profile\/[\w.]+\/post\/\w+$/ // verify bsky link
+
+app.get("/get-image-urls/bsky", (req, res) => {
+    if (req.query?.url && isString(req.query.url)) {
+        const url = req.query.url;
+        switch (true) {
+            case xPostLinkRe.test(url):
+                res.send(`Got twitter link \"${url}\"`);
+                break;
+            case bskyPostLinkRe.test(url):
+                res.send(`Got bsky link \"${url}\"`);
+                break;
+            default:
+                res.send(`Malformed url ${url}`);
+        }
+        // console.log(`get-image-urls: ${req.query.url}`);
+    }
+    else {
+        res.send("Not Ok 😡");
+    }
+    res.send("Ok");
+})
+// url=https%3A%2F%2Fbsky.app%2Fprofile%2Fsizabledanger.hyper.wang%2Fpost%2F3mfg7uhn22k2y
+
+// accept json
+// app.get("/scrape/x", (req, res) => {
+    
+//     const url = req.body["url"];
+//     console.log(url);
+//     let urlTrimmed = url.split("?")[0]; // remove query string
+
+//     if (!xPostLinkRe.test(urlTrimmed)) {
+//         res.send("Error: that is not a valid X post URL");
+//         return;
+//     }
+//      // TODO: handle having query string at end of url, clean url
+//     const postId = urlTrimmed.split("status/")[1];
+//     const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
+//     // TODO: add type checking for json data 
+//     // https://medium.com/@AlexanderObregon/making-typescript-work-with-json-data-you-dont-fully-control-7ede3d4c0828
+//     // TODO: what if no photos?
+//     fetch(infoUrl).then((data) => data.json()).then((json) => {
+//         console.log(json['photos']);
+//         const photosArr = json['photos'] as Array<any>;
+//         let urls = photosArr.flatMap((val, index, arr) => {
+//             const link = val["url"] as string;
+//             let filename = link.split("/").pop();
+//             if (typeof  filename !== 'string') {
+//                 filename = "failedToGetFilename!!!";
+//             }
+            
+//             return {
+//                 "url" : link,
+//                 "filename" : filename
+//             };
+//         });
+
+//         const firstFile = urls[0]
+        
+//         // fetch(firstFile["url"]).then((photoData) => photoData.blob()).then((blob) => {
+//         //     // console.log(blob.type);
+//         //     // res.type(blob.type); // res type is "image/_" (whatever the blob is)
+//         //     const archiveName = "images.zip"
+//         //     res.type("application/zip");
+//         //     // res.set('Content-Disposition', `attachment; filename=${firstFile["filename"]}`) // file should be downloaded locally with the given name
+//         //     res.set('Content-Disposition', `attachment; filename=${archiveName}`) // file should be downloaded locally with the given name
+
+//         //     const zip = new JSZip();
+            
+            
+//         //     blob.arrayBuffer().then((buffer) => {
+//         //         // res.send(Buffer.from(buffer));
+//         //         const name = firstFile["filename"];
+//         //         zip.file(firstFile["filename"], buffer);
+//         //         zip.generateAsync({type: "nodebuffer"}).then((zipFileBuff) => {
+//         //             res.send(Buffer.from(zipFileBuff));
+//         //         })
+//         //     })
+//         // })
+//         // res.send(JSON.stringify(urls));
+//     })
+// })
 
 app.use("/images", express.static("public"))
 

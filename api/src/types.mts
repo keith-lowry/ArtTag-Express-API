@@ -33,3 +33,12 @@ export function isValidTagName(tag:String):boolean {
 export function isValidArtistName(artist:String):boolean{
     return (artist.length <= 50 && artist.length > 0);
 }
+
+/**
+ * Type guard for string type
+ * @param value 
+ * @returns  boolean
+ */
+export function isString(value: unknown): value is string {
+    return typeof value === "string";
+}

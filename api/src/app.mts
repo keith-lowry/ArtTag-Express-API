@@ -10,7 +10,7 @@ import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error } from "console";
-import { isString } from "./types.mjs";
+import { isString, isXPostInfo } from "./types.mjs";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -267,8 +267,54 @@ function getBskyPostImageURLs(url:string): Array<string> {
  * @param url Valid url for X post that may have images
  * @returns An array of urls for the images present on the X post
  */
-function getXPostImageURLs(url:string) {
-    return ["TODO"];
+function getXPostImageURLs(url:string): Array<string> {
+    let res = [];
+    const postId = url.split("status/")[1];
+    const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
+    // TODO: add type checking for json data 
+    // https://medium.com/@AlexanderObregon/making-typescript-work-with-json-data-you-dont-fully-control-7ede3d4c0828
+    // TODO: what if no photos?
+    fetch(infoUrl).then((data) => data.json()).then((json) => {
+        if (!isXPostInfo(json)) {
+            console.log("Got not x post info oops")
+            return [];
+        }
+        console.log(json['photos']);
+        if (!isXPostInfo(json)) {
+            return [];
+        }
+        const photosArr = json['photos'];
+        let imagesarrayresponse = photosArr.flatMap((val, index, arr) => {
+            const link = val["url"];
+            let filename = link.split("/").pop();
+            if (typeof  filename !== 'string') {
+                filename = "failedToGetFilename!!!";
+            }
+
+            return {
+                "url" : link,
+                "filename": filename
+            };
+        })
+
+        console.log(imagesarrayresponse);
+        return imagesarrayresponse;
+
+        // let urls = photosArr.flatMap((val, _, _, _) => {
+        //     const link = val["url"] as string;
+        //     let filename = link.split("/").pop();
+        //     if (typeof  filename !== 'string') {
+        //         filename = "failedToGetFilename!!!";
+        //     }
+            
+        //     return {
+        //         "url" : link,
+        //         "filename" : filename
+        //     };
+        // return ["TODO"];
+    }).catch((err) => {
+        return [];
+    });
 }
 
 const xPostLinkRe = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/ // verify x post link
@@ -281,6 +327,7 @@ app.get("/proxy/post", (req, res) => {
         switch (true) {
             case xPostLinkRe.test(url):
                 res.json(getXPostImageURLs(url));
+                // TODO: pass res object to function to use in callback
                 break;
             case bskyPostLinkRe.test(url):
                 res.json(getBskyPostImageURLs(url));

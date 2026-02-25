@@ -14,7 +14,48 @@ export interface Artist {
     time_created: string // ms since epoch
 }
 
+export interface XPostInfo {
+    photos: Array<XImageInfo>
+}
+export interface XImageInfo {
+    backgroundColor: Object,
+    cropCandidates: Array<Object>,
+    expandedUrl: string,
+    url: string,
+    width: number,
+    height: number
+}
+
 const TAG_SEPARATOR = " ";
+
+export function isXPostInfo(json: unknown): json is XPostInfo {
+    return json !== null && 
+        typeof json === "object" && 
+            Object.keys(json).includes("photos") 
+            // TODO: figure out how to type check photos entry
+            //&&
+            // isXImageInfo(json["photos"]);
+}
+
+export function isXImageInfo(o: unknown): o is XImageInfo {
+    if (o === null || typeof o !== "object") {
+        return false;
+    }
+
+    const keys = Object.keys(o);
+
+    if (!(keys.includes("backgroundColor") && 
+            keys.includes("cropCandidates") && 
+            keys.includes("expandedUrl") && 
+            keys.includes("url") &&
+            keys.includes("width") &&
+            keys.includes("height") )) 
+    {
+        return false;
+    }
+
+    return true;
+}
 
 /**
  * Checks if a given string is a valid tag name that can be stored.

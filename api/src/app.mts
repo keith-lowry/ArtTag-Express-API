@@ -144,11 +144,11 @@ app.get("/artists/list",
             res.send(data)
             return
         }
-        const data = await repo.getArtists()
-        res.send(data)
+        const data = await repo.getArtists();
+        res.send(data);
     }
     catch (error) {
-        res.statusCode = 500
+        res.statusCode = 500;
         res.send("Something went wrong");
         console.error(error);
     }
@@ -251,28 +251,50 @@ app.get("/images/similar", (req, res) => {
     // user can provide max distance as query param or in body
 })
 
+/**
+ * Get an array of urls for the images attached to
+ * the given bsky post url.
+ * @param url Valid url for bsky post that may have images
+ * @returns An array of urls for the images present on the bsky post
+ */
+function getBskyPostImageURLs(url:string): Array<string> {
+    return ["TODO"];
+}
+
+/**
+ * Get an array of urls for the images attached to
+ * the given X post url.
+ * @param url Valid url for X post that may have images
+ * @returns An array of urls for the images present on the X post
+ */
+function getXPostImageURLs(url:string) {
+    return ["TODO"];
+}
+
 const xPostLinkRe = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/ // verify x post link
 const bskyPostLinkRe = /^https:\/\/bsky.app\/profile\/[\w.]+\/post\/\w+$/ // verify bsky link
 
-app.get("/get-image-urls/bsky", (req, res) => {
+app.get("/proxy/post", (req, res) => {
     if (req.query?.url && isString(req.query.url)) {
-        const url = req.query.url;
+        let url = req.query.url;
+        url = url.split("?")[0]; // chop off query params
         switch (true) {
             case xPostLinkRe.test(url):
-                res.send(`Got twitter link \"${url}\"`);
+                res.json(getXPostImageURLs(url));
                 break;
             case bskyPostLinkRe.test(url):
-                res.send(`Got bsky link \"${url}\"`);
+                res.json(getBskyPostImageURLs(url));
                 break;
             default:
-                res.send(`Malformed url ${url}`);
+                res.statusCode = 400;
+                res.send("Invalid social media url in request");
         }
         // console.log(`get-image-urls: ${req.query.url}`);
     }
     else {
-        res.send("Not Ok 😡");
+        res.statusCode = 400;
+        res.send("Missing url parameter in request");
     }
-    res.send("Ok");
 })
 // url=https%3A%2F%2Fbsky.app%2Fprofile%2Fsizabledanger.hyper.wang%2Fpost%2F3mfg7uhn22k2y
 

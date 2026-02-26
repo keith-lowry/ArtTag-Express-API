@@ -10,7 +10,8 @@ import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error } from "console";
-import { isString, isXPostInfo } from "./types.mjs";
+import type { Response } from 'express-serve-static-core';
+import { isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -252,39 +253,48 @@ app.get("/images/similar", (req, res) => {
 })
 
 /**
- * Get an array of urls for the images attached to
+ * Send an array of urls for the images attached to
  * the given bsky post url.
  * @param url Valid url for bsky post that may have images
  * @returns An array of urls for the images present on the bsky post
  */
-function getBskyPostImageURLs(url:string): Array<string> {
-    return ["TODO"];
+function getBskyPostImageURLs(url:string, res: Response<any, Record<string, any>, number>) {
+    res.json(["TODO"]);
 }
 
 /**
- * Get an array of urls for the images attached to
+ * Send an array of urls for the images attached to
  * the given X post url.
  * @param url Valid url for X post that may have images
  * @returns An array of urls for the images present on the X post
  */
-function getXPostImageURLs(url:string): Array<string> {
-    let res = [];
+function getXPostImageURLs(url:string, res: Response<any, Record<string, any>, number>) {
     const postId = url.split("status/")[1];
     const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
+
+
     // TODO: add type checking for json data 
     // https://medium.com/@AlexanderObregon/making-typescript-work-with-json-data-you-dont-fully-control-7ede3d4c0828
     // TODO: what if no photos?
     fetch(infoUrl).then((data) => data.json()).then((json) => {
-        if (!isXPostInfo(json)) {
-            console.log("Got not x post info oops")
-            return [];
+        if (isTweetTombstone(json)) {
+            res.statusCode = 500;
+            res.json({error: "got tombstone instead of tweet content"});
+            console.info("/proxy/post 500 got tweet tombstone");
+            return;
         }
-        console.log(json['photos']);
+
         if (!isXPostInfo(json)) {
-            return [];
+            res.statusCode = 500;
+            res.json({ error: "got unexpected response from image api"});
+            console.warn("/proxy/post 500 got unexepected response from image api :");
+            console.log(json);
+            return;
         }
-        const photosArr = json['photos'];
-        let imagesarrayresponse = photosArr.flatMap((val, index, arr) => {
+        const info = json as XPostInfo;
+
+        const photosArr = info.photos;
+        let urls = photosArr.flatMap((val) => {
             const link = val["url"];
             let filename = link.split("/").pop();
             if (typeof  filename !== 'string') {
@@ -297,8 +307,10 @@ function getXPostImageURLs(url:string): Array<string> {
             };
         })
 
-        console.log(imagesarrayresponse);
-        return imagesarrayresponse;
+        res.json(urls);
+
+        // console.log(imagesarrayresponse);
+        // return imagesarrayresponse;
 
         // let urls = photosArr.flatMap((val, _, _, _) => {
         //     const link = val["url"] as string;
@@ -313,12 +325,16 @@ function getXPostImageURLs(url:string): Array<string> {
         //     };
         // return ["TODO"];
     }).catch((err) => {
-        return [];
+        res.statusCode = 500;
+        res.json({error: "something went wrong"});
+        console.warn("/proxy/post 500 " + err);
+        // TODO: add logging for endpoint hits -> console should log quick info about every endpoint hit/response
     });
 }
 
 const xPostLinkRe = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/ // verify x post link
 const bskyPostLinkRe = /^https:\/\/bsky.app\/profile\/[\w.]+\/post\/\w+$/ // verify bsky link
+// const s:
 
 app.get("/proxy/post", (req, res) => {
     if (req.query?.url && isString(req.query.url)) {
@@ -326,11 +342,17 @@ app.get("/proxy/post", (req, res) => {
         url = url.split("?")[0]; // chop off query params
         switch (true) {
             case xPostLinkRe.test(url):
-                res.json(getXPostImageURLs(url));
-                // TODO: pass res object to function to use in callback
+                getXPostImageURLs(url, res)
+                // TODO: might want to make the get functions async
+                // and just await them here so we can wrap everything 
+                // in a try catch for fun?
+
+                // yes - functions can throw error and we can handle logging them in this single
+                // endpoint
+                // research what makes sense for error logging in express
                 break;
             case bskyPostLinkRe.test(url):
-                res.json(getBskyPostImageURLs(url));
+                getBskyPostImageURLs(url, res);
                 break;
             default:
                 res.statusCode = 400;

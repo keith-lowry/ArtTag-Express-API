@@ -26,17 +26,49 @@ export interface XImageInfo {
     height: number
 }
 
-const TAG_SEPARATOR = " ";
-
-export function isXPostInfo(json: unknown): json is XPostInfo {
-    return json !== null && 
-        typeof json === "object" && 
-            Object.keys(json).includes("photos") 
-            // TODO: figure out how to type check photos entry
-            //&&
-            // isXImageInfo(json["photos"]);
+export interface TweetTombstone {
+    __typename: 'TweetTombstone'
 }
 
+const TAG_SEPARATOR = " ";
+
+export function isTweetTombstone(o: unknown): o is TweetTombstone {
+    return o !== null && 
+        typeof o === "object" && 
+        Object.keys(o).includes("__typename") && 
+        (o as TweetTombstone).__typename === "TweetTombstone";
+}
+
+/**
+ * Type guard for XPostInfo type
+ * @param o Unkown object
+ * @returns True if o is of type XPostInfo
+ */
+export function isXPostInfo(o: unknown): o is XPostInfo {
+    if (o === null 
+        || typeof o !== "object" 
+        || !Object.keys(o).includes("photos")) {
+        return false;
+    }
+    const info = o as XPostInfo;
+
+    if (!Array.isArray(info.photos)) {
+        return false;
+    }
+
+    // only test 1st entry in photos array
+    if (info.photos.length > 0 && !isXImageInfo(info.photos[0])) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Type guard for XImageInfo type
+ * @param o Unknown object
+ * @returns True if o is of type XImageInfo
+ */
 export function isXImageInfo(o: unknown): o is XImageInfo {
     if (o === null || typeof o !== "object") {
         return false;
@@ -51,6 +83,19 @@ export function isXImageInfo(o: unknown): o is XImageInfo {
             keys.includes("width") &&
             keys.includes("height") )) 
     {
+        return false;
+    }
+
+    const info = o as XImageInfo;
+
+    if (!(
+        typeof info.backgroundColor === "object" &&
+        Array.isArray(info.cropCandidates) &&
+        isString(info.expandedUrl) &&
+        typeof info.height === "number" &&
+        typeof info.width === "number" &&
+        typeof isString(info.url) 
+    )) {
         return false;
     }
 

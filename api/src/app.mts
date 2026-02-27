@@ -327,6 +327,8 @@ function getBskyPostImageURLs(url:string, res: Response<any, Record<string, any>
                 return;
             }
             
+            // TODO: standardize what this returns... should be same as
+            // X post scraper
             res.json(images);
         })
     })

@@ -30,6 +30,106 @@ export interface TweetTombstone {
     __typename: 'TweetTombstone'
 }
 
+export interface BskyProfileInfo {
+    did : string
+}
+
+export function isBskyProfileInfo(o: unknown): o is BskyProfileInfo {
+    return o !== null 
+        && typeof o === "object" 
+        && Object.keys(o).includes("did") 
+        && isString((o as BskyProfileInfo).did);
+}
+
+export interface BskyPostInfo {
+    thread : {
+        post : object
+    }
+}
+
+export function isObject(o:unknown): o is object {
+    return o !== null && typeof o == "object";
+}
+
+export function isBskyPostInfo(o: unknown): o is BskyPostInfo {
+    if (!(isObject(o) && Object.keys(o).includes("thread"))) {
+        return false;
+    }
+    const thread = (o as any).thread;
+
+    if (typeof thread !== "object" || !Object.keys(thread).includes("post")) {
+        return false;
+    }
+
+    const post = (thread as any).post;
+
+    if (typeof post !== "object") {
+        return false;
+    }
+
+    return true;
+
+}
+
+export interface BskyImagePost {
+    embed : {
+        images : Array<object>
+    }
+}
+
+
+export function isBskyImagePost(o: unknown): o is BskyImagePost {
+    if (!isObject(o) || !Object.keys(o).includes("embed")) {
+        return false;
+    }
+
+    const embed = (o as any).embed;
+
+    if (!isObject(embed) || !Object.keys(embed).includes("images")) {
+        return false;
+    }
+
+    const images = (embed as any).images;
+
+    return Array.isArray(images);
+}
+
+export interface BskyImage {
+    thumb: string,
+    fullsize: string,
+    alt: string,
+    aspectRatio: { height: number, width: number}
+}
+
+
+export function isBskyImage(o: unknown): o is BskyImage {
+    if (!isObject(o)) {
+        return false;
+    }
+
+    const keys = Object.keys(o);
+
+    if (!(keys.includes("thumb")
+        && keys.includes("fullsize")
+        && keys.includes("alt")
+        && keys.includes("aspectRatio"))) {
+        return false;
+    }
+
+    const image = o as BskyImage;
+
+    if (!(typeof image.alt === "string"
+            && typeof image.aspectRatio === "object"
+            && typeof image.fullsize === "string"
+            && typeof image.thumb === "string"
+            && typeof image.aspectRatio.height === "number"
+            && typeof image.aspectRatio.width === "number")) {
+        return false;
+    }
+
+    return true;
+}
+
 const TAG_SEPARATOR = " ";
 
 export function isTweetTombstone(o: unknown): o is TweetTombstone {

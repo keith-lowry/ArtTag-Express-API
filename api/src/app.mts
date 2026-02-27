@@ -11,7 +11,7 @@ import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error } from "console";
 import type { Response } from 'express-serve-static-core';
-import { isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
+import { isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 
 // TODO: use proper express error handling
 // https://expressjs.com/en/guide/error-handling.html
@@ -282,17 +282,61 @@ app.get("/images/similar", (req, res) => {
  * Send an array of urls for the images attached to
  * the given bsky post url.
  * @param url Valid url for bsky post that may have images
- * @returns An array of urls for the images present on the bsky post
  */
 function getBskyPostImageURLs(url:string, res: Response<any, Record<string, any>, number>) {
-    res.json(["TODO"]);
+
+    const getProfileEndpoint = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile";
+    const getPostEndpoint = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread";
+
+    const path = url.substring("https://bsky.app/".length);
+    const pathBits = path.split("/");
+    const userHandle = pathBits[1];
+    const postId = pathBits[3];
+
+    const getDIDEndpoint = getProfileEndpoint + "?actor=" + userHandle;
+
+    fetch(getDIDEndpoint).then(data => data.json()).then((json) => {
+        // console.log(json);
+        if (!isBskyProfileInfo(json)) {
+            res.status(500).json({"error" : "got unexpected data"});
+            return;
+        }
+        const userDID = json.did;
+
+        const atURI = `at://${userDID}/app.bsky.feed.post/${postId}`
+        const getPostImagesEndpoint = getPostEndpoint + "?uri=" + atURI + "&depth=0";
+
+        fetch(getPostImagesEndpoint).then(data => data.json()).then((json) => {
+            console.log(json);
+            if (!isBskyPostInfo(json)) {
+                res.status(500).json({"error" : "got unexpected data"});
+                return;
+            }
+
+            const post = json.thread.post;
+            if (!isBskyImagePost(post)) {
+                // no embedded images in post
+                res.json([]);
+                return;
+            }
+
+            const images = post.embed.images;
+
+            if (images.length > 0 && !isBskyImage(images[0])) {
+                res.status(500).json({"error" : "got unexpected data"});
+                return;
+            }
+            
+            res.json(images);
+        })
+    })
+
 }
 
 /**
  * Send an array of urls for the images attached to
  * the given X post url.
  * @param url Valid url for X post that may have images
- * @returns An array of urls for the images present on the X post
  */
 function getXPostImageURLs(url:string, res: Response<any, Record<string, any>, number>) {
     const postId = url.split("status/")[1];

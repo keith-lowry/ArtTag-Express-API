@@ -91,8 +91,32 @@ const handleValidationCheck:RequestHandler = (req, res, next) => {
     next();
 }
 
+/**
+ * Route logging middleware
+ * 
+ * Log the 
+ * - UTC time
+ * - request method
+ * - response status code
+ * - url
+ * - time to respond
+ * for every endpoint response
+ */
+app.use((req, res, next) => {
+    const start = Date.now();
+
+    res.on("finish", () => {
+        const timestamp = new Date().toUTCString();
+        const duration = Date.now() - start;
+        console.log(
+            `[${timestamp}] ${res.statusCode} ${req.method} ${req.originalUrl} (${duration} ms)`
+        );
+    })
+    next();
+})
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
+
 
 
 app.get("/tags/list", 
@@ -308,22 +332,6 @@ function getXPostImageURLs(url:string, res: Response<any, Record<string, any>, n
         })
 
         res.json(urls);
-
-        // console.log(imagesarrayresponse);
-        // return imagesarrayresponse;
-
-        // let urls = photosArr.flatMap((val, _, _, _) => {
-        //     const link = val["url"] as string;
-        //     let filename = link.split("/").pop();
-        //     if (typeof  filename !== 'string') {
-        //         filename = "failedToGetFilename!!!";
-        //     }
-            
-        //     return {
-        //         "url" : link,
-        //         "filename" : filename
-        //     };
-        // return ["TODO"];
     }).catch((err) => {
         res.statusCode = 500;
         res.json({error: "something went wrong"});

@@ -22,10 +22,12 @@ const port = 3000;
 
 if (!fs.existsSync(config.imagesFolder)) {
     fs.mkdirSync(config.imagesFolder);
-    console.info(`[STARTUP] Made images folder ${config.imagesFolder}`)
+    const time = new Date().toISOString();
+    console.info(`[${time}] STARTUP Made images folder ${config.imagesFolder}`)
 }
 else {
-    console.info(`[STARTUP] Using images folder ${config.imagesFolder}`)
+    const time = new Date().toISOString();
+    console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
 }
 
 const imageStorage = multer.memoryStorage()
@@ -106,7 +108,7 @@ app.use((req, res, next) => {
     const start = Date.now();
 
     res.on("finish", () => {
-        const timestamp = new Date().toUTCString();
+        const timestamp = new Date().toISOString();
         const duration = Date.now() - start;
         console.log(
             `[${timestamp}] ${res.statusCode} ${req.method} ${req.originalUrl} (${duration} ms)`
@@ -336,7 +338,6 @@ function getXPostImageURLs(url:string, res: Response<any, Record<string, any>, n
         res.statusCode = 500;
         res.json({error: "something went wrong"});
         console.warn("/proxy/post 500 " + err);
-        // TODO: add logging for endpoint hits -> console should log quick info about every endpoint hit/response
     });
 }
 
@@ -373,69 +374,8 @@ app.get("/proxy/post", (req, res) => {
         res.send("Missing url parameter in request");
     }
 })
-// url=https%3A%2F%2Fbsky.app%2Fprofile%2Fsizabledanger.hyper.wang%2Fpost%2F3mfg7uhn22k2y
-
-// accept json
-// app.get("/scrape/x", (req, res) => {
-    
-//     const url = req.body["url"];
-//     console.log(url);
-//     let urlTrimmed = url.split("?")[0]; // remove query string
-
-//     if (!xPostLinkRe.test(urlTrimmed)) {
-//         res.send("Error: that is not a valid X post URL");
-//         return;
-//     }
-//      // TODO: handle having query string at end of url, clean url
-//     const postId = urlTrimmed.split("status/")[1];
-//     const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
-//     // TODO: add type checking for json data 
-//     // https://medium.com/@AlexanderObregon/making-typescript-work-with-json-data-you-dont-fully-control-7ede3d4c0828
-//     // TODO: what if no photos?
-//     fetch(infoUrl).then((data) => data.json()).then((json) => {
-//         console.log(json['photos']);
-//         const photosArr = json['photos'] as Array<any>;
-//         let urls = photosArr.flatMap((val, index, arr) => {
-//             const link = val["url"] as string;
-//             let filename = link.split("/").pop();
-//             if (typeof  filename !== 'string') {
-//                 filename = "failedToGetFilename!!!";
-//             }
-            
-//             return {
-//                 "url" : link,
-//                 "filename" : filename
-//             };
-//         });
-
-//         const firstFile = urls[0]
-        
-//         // fetch(firstFile["url"]).then((photoData) => photoData.blob()).then((blob) => {
-//         //     // console.log(blob.type);
-//         //     // res.type(blob.type); // res type is "image/_" (whatever the blob is)
-//         //     const archiveName = "images.zip"
-//         //     res.type("application/zip");
-//         //     // res.set('Content-Disposition', `attachment; filename=${firstFile["filename"]}`) // file should be downloaded locally with the given name
-//         //     res.set('Content-Disposition', `attachment; filename=${archiveName}`) // file should be downloaded locally with the given name
-
-//         //     const zip = new JSZip();
-            
-            
-//         //     blob.arrayBuffer().then((buffer) => {
-//         //         // res.send(Buffer.from(buffer));
-//         //         const name = firstFile["filename"];
-//         //         zip.file(firstFile["filename"], buffer);
-//         //         zip.generateAsync({type: "nodebuffer"}).then((zipFileBuff) => {
-//         //             res.send(Buffer.from(zipFileBuff));
-//         //         })
-//         //     })
-//         // })
-//         // res.send(JSON.stringify(urls));
-//     })
-// })
-
-app.use("/images", express.static("public"))
 
 app.listen(port, () => {
-    console.info(`[READY] API listening on port ${port}`);
+    const start = new Date().toISOString();
+    console.info(`[${start}] READY: API listening on port ${port}`);
 })

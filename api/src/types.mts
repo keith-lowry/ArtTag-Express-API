@@ -17,127 +17,6 @@ export interface Artist {
 export interface XPostInfo {
     photos: Array<XImageInfo>
 }
-export interface XImageInfo {
-    backgroundColor: Object,
-    cropCandidates: Array<Object>,
-    expandedUrl: string,
-    url: string,
-    width: number,
-    height: number
-}
-
-export interface TweetTombstone {
-    __typename: 'TweetTombstone'
-}
-
-export interface BskyProfileInfo {
-    did : string
-}
-
-export function isBskyProfileInfo(o: unknown): o is BskyProfileInfo {
-    return o !== null 
-        && typeof o === "object" 
-        && Object.keys(o).includes("did") 
-        && isString((o as BskyProfileInfo).did);
-}
-
-export interface BskyPostInfo {
-    thread : {
-        post : object
-    }
-}
-
-export function isObject(o:unknown): o is object {
-    return o !== null && typeof o == "object";
-}
-
-export function isBskyPostInfo(o: unknown): o is BskyPostInfo {
-    if (!(isObject(o) && Object.keys(o).includes("thread"))) {
-        return false;
-    }
-    const thread = (o as any).thread;
-
-    if (typeof thread !== "object" || !Object.keys(thread).includes("post")) {
-        return false;
-    }
-
-    const post = (thread as any).post;
-
-    if (typeof post !== "object") {
-        return false;
-    }
-
-    return true;
-
-}
-
-export interface BskyImagePost {
-    embed : {
-        images : Array<object>
-    }
-}
-
-
-export function isBskyImagePost(o: unknown): o is BskyImagePost {
-    if (!isObject(o) || !Object.keys(o).includes("embed")) {
-        return false;
-    }
-
-    const embed = (o as any).embed;
-
-    if (!isObject(embed) || !Object.keys(embed).includes("images")) {
-        return false;
-    }
-
-    const images = (embed as any).images;
-
-    return Array.isArray(images);
-}
-
-export interface BskyImage {
-    thumb: string,
-    fullsize: string,
-    alt: string,
-    aspectRatio: { height: number, width: number}
-}
-
-
-export function isBskyImage(o: unknown): o is BskyImage {
-    if (!isObject(o)) {
-        return false;
-    }
-
-    const keys = Object.keys(o);
-
-    if (!(keys.includes("thumb")
-        && keys.includes("fullsize")
-        && keys.includes("alt")
-        && keys.includes("aspectRatio"))) {
-        return false;
-    }
-
-    const image = o as BskyImage;
-
-    if (!(typeof image.alt === "string"
-            && typeof image.aspectRatio === "object"
-            && typeof image.fullsize === "string"
-            && typeof image.thumb === "string"
-            && typeof image.aspectRatio.height === "number"
-            && typeof image.aspectRatio.width === "number")) {
-        return false;
-    }
-
-    return true;
-}
-
-const TAG_SEPARATOR = " ";
-
-export function isTweetTombstone(o: unknown): o is TweetTombstone {
-    return o !== null && 
-        typeof o === "object" && 
-        Object.keys(o).includes("__typename") && 
-        (o as TweetTombstone).__typename === "TweetTombstone";
-}
 
 /**
  * Type guard for XPostInfo type
@@ -162,6 +41,15 @@ export function isXPostInfo(o: unknown): o is XPostInfo {
     }
 
     return true;
+}
+
+export interface XImageInfo {
+    backgroundColor: Object,
+    cropCandidates: Array<Object>,
+    expandedUrl: string,
+    url: string,
+    width: number,
+    height: number
 }
 
 /**
@@ -201,6 +89,186 @@ export function isXImageInfo(o: unknown): o is XImageInfo {
 
     return true;
 }
+
+export interface TweetTombstone {
+    __typename: 'TweetTombstone'
+}
+
+/**
+ * Type guard for TweetTombstone
+ * @param o Unknown object
+ * @returns True if o is of type TweetTombstone
+ */
+export function isTweetTombstone(o: unknown): o is TweetTombstone {
+    return o !== null && 
+        typeof o === "object" && 
+        Object.keys(o).includes("__typename") && 
+        (o as TweetTombstone).__typename === "TweetTombstone";
+}
+
+export interface BskyProfileInfo {
+    did : string
+}
+
+/**
+ * Type guard for BskyProfileInfo
+ * @param o Unknown object
+ * @returns True if o is of type BskyProfileInfo
+ */
+export function isBskyProfileInfo(o: unknown): o is BskyProfileInfo {
+    return o !== null 
+        && typeof o === "object" 
+        && Object.keys(o).includes("did") 
+        && isString((o as BskyProfileInfo).did);
+}
+
+export interface BskyPostInfo {
+    thread : {
+        post : object
+    }
+}
+
+/**
+ * Type guard for BskyPostInfo
+ * @param o Unknown object
+ * @returns True if o is of type BskyPostInfo
+ */
+export function isBskyPostInfo(o: unknown): o is BskyPostInfo {
+    if (!(isObject(o) && Object.keys(o).includes("thread"))) {
+        return false;
+    }
+    const thread = (o as any).thread;
+
+    if (typeof thread !== "object" || !Object.keys(thread).includes("post")) {
+        return false;
+    }
+
+    const post = (thread as any).post;
+
+    if (typeof post !== "object") {
+        return false;
+    }
+
+    return true;
+
+}
+
+/**
+ * Type guard for object
+ * @param o Unknown object
+ * @returns True if o is of type object
+ */
+export function isObject(o:unknown): o is object {
+    return o !== null && typeof o == "object";
+}
+
+export interface BskyImagePost {
+    embed : {
+        images : Array<object>
+    }
+}
+
+/**
+ * Type guard for BskyImagePost
+ * @param o Unknown object
+ * @returns True if o is of type BskyImagePost
+ */
+export function isBskyImagePost(o: unknown): o is BskyImagePost {
+    if (!isObject(o) || !Object.keys(o).includes("embed")) {
+        return false;
+    }
+
+    const embed = (o as any).embed;
+
+    if (!isObject(embed) || !Object.keys(embed).includes("images")) {
+        return false;
+    }
+
+    const images = (embed as any).images;
+
+    return Array.isArray(images);
+}
+
+export interface BskyImage {
+    thumb: string,
+    fullsize: string,
+    alt: string,
+    aspectRatio: { height: number, width: number}
+}
+
+
+/**
+ * Type guard for BskyImage
+ * @param o Unknown object
+ * @returns True if o is of type BskyImage
+ */
+export function isBskyImage(o: unknown): o is BskyImage {
+    if (!isObject(o)) {
+        return false;
+    }
+
+    const keys = Object.keys(o);
+
+    if (!(keys.includes("thumb")
+        && keys.includes("fullsize")
+        && keys.includes("alt")
+        && keys.includes("aspectRatio"))) {
+        return false;
+    }
+
+    const image = o as BskyImage;
+
+    if (!(typeof image.alt === "string"
+            && typeof image.aspectRatio === "object"
+            && typeof image.fullsize === "string"
+            && typeof image.thumb === "string"
+            && typeof image.aspectRatio.height === "number"
+            && typeof image.aspectRatio.width === "number")) {
+        return false;
+    }
+
+    return true;
+}
+
+const TAG_SEPARATOR = " ";
+
+/**
+ * Error class with an HTTP Status Code
+ * and an associated error message.
+ */
+export class HttpError extends Error {
+    public status: number;
+
+    constructor(
+        status: number,
+        message: string
+    ) {
+        super(message);
+        this.status = status;
+    }
+}
+
+/**
+ * Type guard for HttpError
+ * @param o Unknown object
+ * @returns True if o is of type HttpError
+ */
+export function isHttpError(o:unknown): o is HttpError {
+    if (!isObject(o)) {
+        return false;
+    }
+
+    const keys = Object.keys(o);
+
+    if (!(keys.includes("status") 
+        && keys.includes("message"))) {
+        return false;
+    }
+    const err = o as HttpError;
+
+    return (typeof err.message === "string" 
+        && typeof err.status === "number");
+} 
 
 /**
  * Checks if a given string is a valid tag name that can be stored.

@@ -10,8 +10,8 @@ import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error } from "console";
-import type { Response } from 'express-serve-static-core';
-import { isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
+import type { NextFunction, Response } from 'express-serve-static-core';
+import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 import { asyncHandler } from "./helpers.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
 
@@ -88,11 +88,15 @@ const handleValidationCheck:RequestHandler = (req, res, next) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
         // console.log(result)
-        res.statusCode = 400;
-        res.send(result)
-        return
+        throw new HttpError(400, "validation error");
+        // TODO: use formatter for result to format as a string
+        // res.statusCode = 400;
+        // res.send(result)
+        // return
     }
-    next();
+    else {
+        next();
+    }
 }
 
 /**
@@ -280,39 +284,28 @@ app.get("/images/similar", (req, res) => {
     // user can provide max distance as query param or in body
 })
 
-// const s:
+app.get("/proxy/post", validators.stringQuery("url"), handleValidationCheck, asyncHandler(proxyController.getImagesFromPost));
 
-// app.get("/proxy/post", (req, res) => {
-//     if (req.query?.url && isString(req.query.url)) {
-//         let url = req.query.url;
-//         url = url.split("?")[0]; // chop off query params
-//         switch (true) {
-//             case xPostLinkRe.test(url):
-//                 getXPostImageURLs(url, res)
-//                 // TODO: might want to make the get functions async
-//                 // and just await them here so we can wrap everything 
-//                 // in a try catch for fun?
 
-//                 // yes - functions can throw error and we can handle logging them in this single
-//                 // endpoint
-//                 // research what makes sense for error logging in express
-//                 break;
-//             case bskyPostLinkRe.test(url):
-//                 getBskyPostImageURLs(url, res);
-//                 break;
-//             default:
-//                 res.statusCode = 400;
-//                 res.send("Invalid social media url in request");
-//         }
-//         // console.log(`get-image-urls: ${req.query.url}`);
-//     }
-//     else {
-//         res.statusCode = 400;
-//         res.send("Missing url parameter in request");
-//     }
-// })
+// use a global error handler
+app.use((err: Error, req: unknown, res: Response, next: NextFunction) => {
 
-app.get("/proxy/post", asyncHandler(proxyController.getImagesFromPost));
+    if (res.headersSent || !isHttpError(err)) {
+        // TODO: uhh how come it send html thingy with validation error uh i just
+        // wanna send json ig
+        
+        // pass error to the default error handler
+        return next(err);
+    }
+
+    const httperr = err as HttpError;
+    console.error(httperr);
+
+
+    res.status(httperr.status).json({
+        "error" : httperr.message
+    })
+});
 
 app.listen(port, () => {
     const start = new Date().toISOString();

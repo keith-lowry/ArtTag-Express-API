@@ -246,6 +246,7 @@ export class HttpError extends Error {
         super(message);
         this.status = status;
     }
+    // TODO: add json field or short version that can be sent to client
 }
 
 /**
@@ -269,6 +270,29 @@ export function isHttpError(o:unknown): o is HttpError {
     return (typeof err.message === "string" 
         && typeof err.status === "number");
 } 
+
+/**
+ * An object containing data for an image scraped
+ * from a social media (X, Bsky) post
+ */
+export interface ScrapedImage {
+    /**
+     * URL for the post this image came from
+     */
+    postUrl: string,
+    /**
+     * URL for the image content
+     */
+    imgUrl: string,
+    /**
+     * Social media handle for the post author
+     */
+    postAuthor: string,
+    /**
+     * Filename of the image
+     */
+    filename: string
+}
 
 /**
  * Checks if a given string is a valid tag name that can be stored.

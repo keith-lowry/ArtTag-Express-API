@@ -1,4 +1,4 @@
-import { query, body } from "express-validator";
+import { query, body, param } from "express-validator";
 import { isValidArtistName, isValidTagName } from "./types.mjs";
 import config from "../config.json" with {type : 'json'}
 
@@ -137,13 +137,18 @@ const createBoolValidator = (bodyParamName: string, optional: boolean = false) =
     return chain
 }
 
+const createStringQueryParamValidator = (queryParamName: string) => {
+    return query(queryParamName).isString();
+}
+
 const validators = Object.freeze({
     taglist : createTagListValidator,
     epoch : createEpochValidator,
     artist: createArtistValidator,
     artistlist: createArtistListValidator,
     srcUrl: createSourceUrlValidator,
-    bool: createBoolValidator
+    bool: createBoolValidator,
+    stringQuery : createStringQueryParamValidator
 })
 
 

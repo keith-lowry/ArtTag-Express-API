@@ -9,7 +9,7 @@ import { query, body, validationResult } from "express-validator";
 import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
-import { error } from "console";
+import { error, time } from "console";
 import type { NextFunction, Response } from 'express-serve-static-core';
 import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 import { asyncHandler } from "./helpers.mjs";
@@ -290,19 +290,27 @@ app.get("/proxy/post", validators.stringQuery("url"), handleValidationCheck, asy
 // use a global error handler
 app.use((err: Error, req: unknown, res: Response, next: NextFunction) => {
 
-    if (res.headersSent || !isHttpError(err)) {
-        // TODO: uhh how come it send html thingy with validation error uh i just
-        // wanna send json ig
-        
-        // pass error to the default error handler
+    if (res.headersSent) {
         return next(err);
     }
 
+    // TODO: log req path
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}]`, err);
+
+    if (!isHttpError(err)) {
+        // TODO: uhh how come it send html thingy with validation error uh i just
+        // wanna send json ig
+        res.status(500).json({"error" : "Internal server error"});
+        return;
+    }
+
     const httperr = err as HttpError;
-    console.error(httperr);
+    // console.error(`[${timestamp}]`, httperr);
+    const statusCode = (httperr.status >= 400 && httperr.status <= 511)? httperr.status : 500;
 
 
-    res.status(httperr.status).json({
+    res.status(statusCode).json({
         "error" : httperr.message
     })
 });

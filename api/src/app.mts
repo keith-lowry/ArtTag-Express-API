@@ -1,7 +1,6 @@
 import express from "express";
 import type { RequestHandler, ErrorRequestHandler } from "express";
 import { repo } from "./db/repository.mjs";
-// import { isValidArtistName, isValidTagName } from "./types.mjs";
 import multer from "multer";
 import { MulterError } from "multer";
 import bodyParser from "body-parser";
@@ -14,9 +13,6 @@ import type { NextFunction, Response } from 'express-serve-static-core';
 import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 import { asyncHandler } from "./helpers.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
-
-// TODO: use proper express error handling
-// https://expressjs.com/en/guide/error-handling.html
 
 
 const app = express();
@@ -284,19 +280,20 @@ app.get("/images/similar", (req, res) => {
     // user can provide max distance as query param or in body
 })
 
-app.get("/proxy/post", validators.stringQuery("url"), handleValidationCheck, asyncHandler(proxyController.getImagesFromPost));
+app.get(
+    "/proxy/post", 
+    validators.stringQuery("url"), 
+    handleValidationCheck, 
+    asyncHandler(proxyController.getImagesFromPost)
+);
 
-
-// use a global error handler
-app.use((err: Error, req: unknown, res: Response, next: NextFunction) => {
-
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (res.headersSent) {
         return next(err);
     }
 
-    // TODO: log req path
     const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}]`, err);
+    console.error(`[${timestamp}]`, req.originalUrl, err);
 
     if (!isHttpError(err)) {
         // TODO: uhh how come it send html thingy with validation error uh i just
@@ -313,7 +310,10 @@ app.use((err: Error, req: unknown, res: Response, next: NextFunction) => {
     res.status(statusCode).json({
         "error" : httperr.message
     })
-});
+}
+
+// use a global error handler
+app.use(errorHandler);
 
 app.listen(port, () => {
     const start = new Date().toISOString();

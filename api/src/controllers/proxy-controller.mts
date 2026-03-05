@@ -1,5 +1,7 @@
 import { type Request, type Response } from "express";
 import { HttpError } from "../types.mjs";
+import config from "../../config.json" with { type: 'json' };
+
 
 import * as proxyService from '../services/proxy-service.mjs';
 
@@ -8,6 +10,9 @@ const X_POST_URL_RE = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/
 
 // regex for matching bsky post link
 const BSKY_POST_URL_RE = /^https:\/\/bsky.app\/profile\/[\w.]+\/post\/\w+$/
+
+// regex for matching twitter image URLS
+const TWIT_IMG_URL_RE = /^https:\/\/pbs.twimg.com\/media\/[\w.]+$/
 
 /**
  * Fetch and respond with an array of scraped images from the given
@@ -37,4 +42,44 @@ export async function getImagesFromPost(req: Request, res: Response) {
         default:
             throw new HttpError(400, "invalid social media url in request");
     }
+}
+
+export async function getImageFromURL(req: Request, res: Response) {
+
+    const url = req.query.url as string;
+    // https://pbs.twimg.com/media/HBhZbR4a0AAuO0I.jpg
+
+    if (!TWIT_IMG_URL_RE.test(url)) {
+        throw new HttpError(400, "invalid image url in request");
+    }
+
+    const data = await fetch(url, {
+        "method" : "head"
+    });
+
+    if (!data.ok) {
+        throw new HttpError(500, "failed to fetch headers from image url");
+    }
+
+    const contentType = data.headers.get("content-type");
+    if (!contentType?.startsWith("image/")) {
+        throw new HttpError(400, "requested proxy is not for an image");
+    }
+
+    const imgSizeBytes = Number(data.headers.get("content-length"));
+    if (imgSizeBytes > (config.maxFileSizeMB * 1000000)) {
+        throw new HttpError(400, "requested image to proxy is too large");
+    }
+
+    const bodyData = await fetch(url);
+    if (!bodyData.ok) {
+        throw new HttpError(500, "failed to fetch data from image url");
+    }
+
+    const bytes = await bodyData.bytes()
+    
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Length", imgSizeBytes);
+    res.end(bytes);
 }

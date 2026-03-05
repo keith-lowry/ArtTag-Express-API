@@ -287,6 +287,13 @@ app.get(
     asyncHandler(proxyController.getImagesFromPost)
 );
 
+app.get(
+    "/proxy/image",
+    validators.stringQuery("url"),
+    handleValidationCheck,
+    asyncHandler(proxyController.getImageFromURL)
+)
+
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (res.headersSent) {
         return next(err);

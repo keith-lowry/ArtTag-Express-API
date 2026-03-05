@@ -17,6 +17,7 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
     const getDIDEndpoint = GET_PROFILE_ENDPOINT + "?actor=" + userHandle;
 
     let data = await fetch(getDIDEndpoint);
+    // TODO: check status
     let json = await data.json();
 
     if (!isBskyProfileInfo(json)) {
@@ -29,6 +30,7 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
     const getPostImagesEndpoint = GET_POST_ENDPOINT + "?uri=" + atURI + "&depth=0";
 
     data = await fetch(getPostImagesEndpoint);
+    // TODO: check status
     json = await data.json();
 
     if (!isBskyPostInfo(json)) {
@@ -70,6 +72,7 @@ export async function getXPostImageURLs(url:string): Promise<ScrapedImage[]> {
     const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
 
     const data = await fetch(infoUrl);
+    // TODO: check status
     const json = await data.json();
     
     if (isTweetTombstone(json)) {

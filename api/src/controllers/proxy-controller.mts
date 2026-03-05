@@ -65,6 +65,8 @@ export async function getImageFromURL(req: Request, res: Response) {
         throw new HttpError(500, "failed to fetch headers from image url");
     }
 
+    // TODO: double check headers keys exist
+
     const contentType = data.headers.get("content-type");
     if (!contentType?.startsWith("image/")) {
         throw new HttpError(400, "requested proxy is not for an image");

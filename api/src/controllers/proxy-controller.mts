@@ -6,13 +6,17 @@ import config from "../../config.json" with { type: 'json' };
 import * as proxyService from '../services/proxy-service.mjs';
 
 // regex for matching x post link
-const X_POST_URL_RE = /^https:\/\/(fixupx|x).com\/[\w]+\/status\/\d+$/
+const X_POST_URL_RE = /^https:\/\/(fixupx|x)\.com\/[\w]+\/status\/\d+$/
 
 // regex for matching bsky post link
-const BSKY_POST_URL_RE = /^https:\/\/bsky.app\/profile\/[\w.]+\/post\/\w+$/
+const BSKY_POST_URL_RE = /^https:\/\/bsky\.app\/profile\/[\w\.]+\/post\/\w+$/
 
 // regex for matching twitter image URLS
-const TWIT_IMG_URL_RE = /^https:\/\/pbs.twimg.com\/media\/[\w.]+$/
+const TWIT_IMG_URL_RE = /^https:\/\/pbs\.twimg\.com\/media\/[\w\.]+$/
+
+
+// https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:lkffzw3n5t2haffclh4jo4nj/bafkreie6hu5zzmf65amb7hyobokkjttsn227qydrtndls5dlkeksm4gdxq@jpeg
+const BSKY_IMG_URL_RE = /^https:\/\/cdn\.bsky\.app\/img\/feed_fullsize\/plain\/did:plc:[\w]+\/[\w]+@[\w]+$/
 
 /**
  * Fetch and respond with an array of scraped images from the given
@@ -49,7 +53,7 @@ export async function getImageFromURL(req: Request, res: Response) {
     const url = req.query.url as string;
     // https://pbs.twimg.com/media/HBhZbR4a0AAuO0I.jpg
 
-    if (!TWIT_IMG_URL_RE.test(url)) {
+    if (!(TWIT_IMG_URL_RE.test(url) || BSKY_IMG_URL_RE.test(url))) {
         throw new HttpError(400, "invalid image url in request");
     }
 

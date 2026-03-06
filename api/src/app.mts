@@ -4,7 +4,7 @@ import { repo } from "./db/repository.mjs";
 import multer from "multer";
 import { MulterError } from "multer";
 import bodyParser from "body-parser";
-import { query, body, validationResult } from "express-validator";
+import { query, body, validationResult, type ErrorFormatter, type ValidationError } from "express-validator";
 import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
@@ -73,6 +73,12 @@ const handleUploadParsing:RequestHandler = (req, res, next) => {
     })
 }
 
+const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
+    
+
+    return "TODO";
+}
+
 /**
  * Middleware to check if validation result is not empty. Stops
  * chain and sends 400 to client if true.
@@ -84,11 +90,14 @@ const handleValidationCheck:RequestHandler = (req, res, next) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
         // console.log(result)
-        throw new HttpError(400, "validation error");
+        // const msg:string = result.formatWith<string>(errorFormatter);
+        // https://express-validator.github.io/docs/api/validation-result/#mapped
+        // NOTE: can check which type of error it is by checking "type" property
+        // console.log("VALIDATION ARRAY", result.array());
+        // console.log("VALIDATION MAPPED", result.mapped());
+        // TODO: should be json?
+        throw new HttpError(400, "invalid request", result.array({onlyFirstError: true}));
         // TODO: use formatter for result to format as a string
-        // res.statusCode = 400;
-        // res.send(result)
-        // return
     }
     else {
         next();
@@ -296,15 +305,15 @@ app.get(
 
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (res.headersSent) {
+        console.log("HEADERS SENT ALREADY ERR");
         return next(err);
     }
 
     const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}]`, req.originalUrl, err);
+    console.error(`[${timestamp}]`, req.method + " " + req.originalUrl, err);
 
     if (!isHttpError(err)) {
-        // TODO: uhh how come it send html thingy with validation error uh i just
-        // wanna send json ig
+        console.log("IS NOT HTTP ERROR", err);
         res.status(500).json({"error" : "Internal server error"});
         return;
     }
@@ -315,7 +324,8 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
 
     res.status(statusCode).json({
-        "error" : httperr.message
+        "error" : httperr.message,
+        "details" : httperr.details
     })
 }
 

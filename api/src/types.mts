@@ -238,13 +238,16 @@ const TAG_SEPARATOR = " ";
  */
 export class HttpError extends Error {
     public status: number;
+    public details: object;
 
     constructor(
         status: number,
-        message: string
+        message: string,
+        details: object = {}
     ) {
         super(message);
         this.status = status;
+        this.details = details;
     }
     // TODO: add json field or short version that can be sent to client
 }
@@ -259,10 +262,11 @@ export function isHttpError(o:unknown): o is HttpError {
         return false;
     }
 
-    const keys = Object.keys(o);
-
-    if (!(keys.includes("status") 
-        && keys.includes("message"))) {
+    // const keys = Object.keys(o);
+    Object.keys
+    // console.log(keys);
+    if (!(Object.hasOwn(o, "status")
+        && Object.hasOwn(o, "message"))) {
         return false;
     }
     const err = o as HttpError;

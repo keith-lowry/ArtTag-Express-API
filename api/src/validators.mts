@@ -137,8 +137,20 @@ const createBoolValidator = (bodyParamName: string, optional: boolean = false) =
     return chain
 }
 
+// TODO: add withMessgae() to other checks
+
 const createStringQueryParamValidator = (queryParamName: string) => {
-    return query(queryParamName).isString();
+    return query(queryParamName)
+        .exists()
+        .bail()
+        .withMessage(`missing query param \'${queryParamName}\'`)
+        // .withMessage("param not present")
+        .isString()
+        .bail()
+        .withMessage(`query param \'${queryParamName}\' should be a string`)
+        .bail()
+        .notEmpty()
+        .withMessage(`query param \'${queryParamName}\' should be a nonempty string`);
 }
 
 const validators = Object.freeze({

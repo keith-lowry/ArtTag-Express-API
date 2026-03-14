@@ -13,10 +13,15 @@ import type { NextFunction, Response } from 'express-serve-static-core';
 import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
 import { asyncHandler } from "./helpers.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
+import cors from "cors";
 
 
 const app = express();
 const port = 3000;
+
+app.use(cors({
+    origin: "http://localhost:5173"
+}));
 
 if (!fs.existsSync(config.imagesFolder)) {
     fs.mkdirSync(config.imagesFolder);

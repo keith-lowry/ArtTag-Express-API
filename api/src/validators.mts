@@ -149,6 +149,7 @@ const createStringQueryParamValidator = (queryParamName: string) => {
         .bail()
         .withMessage(`query param \'${queryParamName}\' should be a string`)
         .bail()
+        .trim()
         .notEmpty()
         .withMessage(`query param \'${queryParamName}\' should be a nonempty string`);
 }

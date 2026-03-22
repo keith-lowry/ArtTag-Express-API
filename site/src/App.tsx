@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router'
 import './App.css'
 import GalleryPage from './components/gallery-page/GalleryPage'
-import PreviewPage from './components/gallery-page/Preview'
+import PreviewPage from './components/Preview'
 
 function App() {
 

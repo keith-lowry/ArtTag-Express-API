@@ -6,3 +6,4 @@ build/*
 images
 .DS_Store
 package-lock.json
+dist/*

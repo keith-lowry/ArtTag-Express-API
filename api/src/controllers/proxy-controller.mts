@@ -6,7 +6,7 @@ import config from "../../config.json" with { type: 'json' };
 import * as proxyService from '../services/proxy-service.mjs';
 
 // regex for matching x post link
-const X_POST_URL_RE = /^https:\/\/(fixupx|x)\.com\/[\w]+\/status\/\d+$/
+const X_POST_URL_RE = /^https:\/\/(fixupx|x|twitter|fxtwitter)\.com\/[\w]+\/status\/\d+$/
 
 // regex for matching bsky post link
 const BSKY_POST_URL_RE = /^https:\/\/bsky\.app\/profile\/[\w\.]+\/post\/\w+$/

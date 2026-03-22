@@ -49,15 +49,20 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
         throw new HttpError(500, "got invalid image data from bsky post api");
     }
 
+    // capture username inside post url
+    const handleMatch = url.match(/bsky\.app\/profile\/([^/]+)/);
+    const handle = handleMatch?.[1];
+    const postAuthorUsername = (handle)? handle.split(".")[0] : "";
+
     console.log(images);
     return images.map((val) => {
         return {
             postUrl: url,
             imgUrl: val.fullsize,
-            // TODO: get post author
-            postAuthor: "TODO",
-            // TODO: get image filename
-            filename: "TODO"
+            postAuthor: postAuthorUsername,
+            // NOTE: bsky image links don't include file extension
+            // just leave blank, not really necessary
+            filename: ""
         }
     });
 }

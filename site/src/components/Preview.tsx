@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ScrapedImage } from "../../types";
+import { isScrapedImage, type ScrapedImage } from "../types";
 
 function isUrl(s:string): boolean {
     try {
@@ -29,17 +29,15 @@ function PreviewPage() {
         }
 
         fetch(`http://localhost:3000/proxy/post?url=${encodeURIComponent(postURL)}`)
-            .then(res => {
+            .then(async (res) => {
+                const data = await res.json();
                 if (!res.ok) {
-                    res.json().then(json => {
-                        console.error(json);
-                    })
-                    // throw new Error(`Fetch error ${res.status}: ${res.statusText}`);
-                    return;
+                    throw new Error(data.error);
                 }
-                return res.json();
+                return data;
             }) 
             .then(json => {
+                // todo: why is it still going here when we throw an error
                 console.log(json)
                 if (!Array.isArray(json)) {
                     throw new Error("Got invalid response from post proxy endpoint " + json);
@@ -48,10 +46,10 @@ function PreviewPage() {
                 setDisplayText(JSON.stringify(json, null, 2));
                 const scrapedImageUrls = new Array<string>();
                 arr.forEach((val) => {
-                    // TODO: use type guard for scrapedimage; probably move types.tsx from api to project root
-                    if (!Object.keys(val).includes("imgUrl")) {
+                    if (!isScrapedImage(val)) {
                         throw new Error("Got invalid data from post proxy endpoint " + val);
                     }
+                    
                     const imgObj = val as ScrapedImage;
                     scrapedImageUrls.push(imgObj.imgUrl);
                 })

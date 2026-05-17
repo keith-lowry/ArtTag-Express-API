@@ -77,15 +77,22 @@ export async function getXPostImageURLs(url:string): Promise<ScrapedImage[]> {
     const infoUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${postId}&token=a`
 
     const data = await fetch(infoUrl);
-    // TODO: check status
+
+    // non-200 status from twitter api
+    if (!data.ok) {
+        throw new HttpError(500, `got response status ${data.status} from twitter image api`);
+    }
     const json = await data.json();
-    
+
+    // got OK response, but content is a tweet tombstone
     if (isTweetTombstone(json)) {
         throw new HttpError(500, "got tombstone instead of tweet content");
     }
 
+    // got OK response, but data format is not something
+    // the app can handle
     if (!isXPostInfo(json)) {
-        throw new HttpError(500, "got invalid response from twitter image api");
+        throw new HttpError(500, "got invalid response data from twitter image api");
     }
 
     const info = json as XPostInfo;
@@ -93,17 +100,16 @@ export async function getXPostImageURLs(url:string): Promise<ScrapedImage[]> {
     const photosArr = info.photos;
     let urls = photosArr.flatMap((val) => {
         const link = val["url"];
-        let filename = link.split("/").pop();
-        if (typeof  filename !== 'string') {
-            filename = "failedToGetFilename!!!";
-        }
+        // let filename = link.split("/").pop();
+        // if (typeof  filename !== 'string') {
+        //     filename = "failedToGetFilename!!!";
+        // }
 
         return {
             "postUrl" : url,
             "imgUrl" : link,
-            // TODO: get twitter handle from url
-            "postAuthor" : "TODO",
-            "filename": filename
+            "postAuthor" : json.user.screen_name,
+            // "filename": filename
         };
     })
 

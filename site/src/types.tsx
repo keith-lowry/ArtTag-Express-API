@@ -291,8 +291,11 @@ export interface ScrapedImage {
     postAuthor: string,
     /**
      * Filename of the image
+     * 
+     * NOTE: commented out as it does not seem to be useful
+     * for now, and we don't get this info for bsky post images.
      */
-    filename: string
+    // filename: string
 }
 
 export function isScrapedImage(o:unknown): o is ScrapedImage {
@@ -302,8 +305,8 @@ export function isScrapedImage(o:unknown): o is ScrapedImage {
 
     if (!(Object.hasOwn(o, "postUrl")
         && Object.hasOwn(o, "imgUrl")
-        && Object.hasOwn(o, "postAuthor")
-        && Object.hasOwn(o, "filename"))) 
+        && Object.hasOwn(o, "postAuthor")))
+        // && Object.hasOwn(o, "filename"))) 
     {
         return false;
     }
@@ -312,8 +315,8 @@ export function isScrapedImage(o:unknown): o is ScrapedImage {
 
     if (!(isString(scraped.postUrl, true)
         && isString(scraped.imgUrl, true)
-        && isString(scraped.postAuthor)
-        && isString(scraped.filename))) 
+        && isString(scraped.postAuthor)))
+        // && isString(scraped.filename))) 
     {
         return false;
     }

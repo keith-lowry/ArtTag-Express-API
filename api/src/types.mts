@@ -15,7 +15,51 @@ export interface Artist {
 }
 
 export interface XPostInfo {
-    photos: Array<XImageInfo>
+    photos: Array<XImageInfo>,
+    user: XPostUserInfo
+}
+
+export interface XPostUserInfo {
+    id_str : string,
+    name : string,
+    screen_name: string,
+    is_blue_verified: boolean,
+    profile_image_shape: string,
+    verified: boolean,
+    profile_image_url_https: string
+}
+
+/**
+ * Type guard for XPostUserInfo type
+ * @param o Unkown object
+ * @returns True if o is of type XPostUserInfo
+ */
+export function isXPostUserInfo(o:unknown): o is XPostUserInfo {
+    if (o === null 
+        || typeof o !== "object"
+        || !Object.keys(o).includes("id_str")
+        || !Object.keys(o).includes("name")
+        || !Object.keys(o).includes("screen_name")
+        || !Object.keys(o).includes("is_blue_verified")
+        || !Object.keys(o).includes("profile_image_shape")
+        || !Object.keys(o).includes("verified")
+        || !Object.keys(o).includes("profile_image_url_https")) {
+            return false;
+    }
+
+    const uinfo = o as XPostUserInfo;
+
+    if (!isString(uinfo.id_str)
+        || !isString(uinfo.name)
+        || !isString(uinfo.screen_name)
+        || typeof uinfo.is_blue_verified !== "boolean"
+        || !isString(uinfo.profile_image_shape)
+        || typeof uinfo.verified !== "boolean"
+        || !isString(uinfo.profile_image_url_https)) {
+            return false;
+    }
+
+    return true;
 }
 
 /**
@@ -26,7 +70,8 @@ export interface XPostInfo {
 export function isXPostInfo(o: unknown): o is XPostInfo {
     if (o === null 
         || typeof o !== "object" 
-        || !Object.keys(o).includes("photos")) {
+        || !Object.keys(o).includes("photos")
+        || !Object.keys(o).includes("user")) {
         return false;
     }
     const info = o as XPostInfo;
@@ -37,6 +82,11 @@ export function isXPostInfo(o: unknown): o is XPostInfo {
 
     // only test 1st entry in photos array
     if (info.photos.length > 0 && !isXImageInfo(info.photos[0])) {
+        return false;
+    }
+
+    // check that user info matches interface we expect
+    if (!isXPostUserInfo(info.user)) {
         return false;
     }
 
@@ -294,8 +344,11 @@ export interface ScrapedImage {
     postAuthor: string,
     /**
      * Filename of the image
+     * 
+     * NOTE: commented out as it does not seem to be useful
+     * for now, and we don't get this info for bsky post images.
      */
-    filename: string
+    // filename: string
 }
 
 /**

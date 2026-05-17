@@ -76,7 +76,7 @@ function PreviewPage() {
 
                 <button type="submit">Submit</button>
             </form>
-            {displayText.length > 0 && <pre style={{textAlign: "left", backgroundColor:"#444242", padding:"2em"}}>{displayText}</pre>}
+            {displayText.length > 0 && <pre style={{textAlign: "left", backgroundColor:"#444242", padding:"2em", overflow:"scroll", width:"70%" }}>{displayText}</pre>}
             {images.length === 0 && <p>Nothing yet</p>}
             <div style={{display:"flex", flexDirection: "column"}}>
                 {images.map((url, index) => {

@@ -6,13 +6,13 @@ const createEpochValidator = (paramName:string) => {
     return query(paramName)
         .optional()
         .notEmpty()
-        .trim().
-        isFloat()
+        .trim()
+        .isFloat()
         .bail()
-        .withMessage("must be float value")
+        .withMessage(`query parameter ${paramName} must be a float value`)
         .toFloat()
         .custom(value => value >= 0)
-        .withMessage("must be greater than or equal to 0")
+        .withMessage(`query parameter ${paramName} must be greater than or equal to 0`);
 }
 
 const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: boolean = false) => {
@@ -20,15 +20,17 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
     const chain = body(bodyParamName)
         .exists()
         .bail()
-        .withMessage("tags list is missing")
+        .withMessage(`body parameter ${bodyParamName} is missing`);
 
     // handle different formats param can be passed in formData
     if (isForm) {
         chain.customSanitizer(value => {
-            // Option 1: separate key value pairs with same key -> parsed to array alrdy
+            // Option 1: separate key value pairs with same key
+            // -> parsed to array already by request parser
             if (Array.isArray(value)) {
                 return value;
             }
+            
             // Option 2: single key value pair with individual tags separated by TAG_SEPARATOR
             const val = value as String
             return val.split(config.tagSeparator)
@@ -36,7 +38,7 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
     }
 
     chain.isArray({min: 1, max: maxSize})
-        .withMessage("must be a non-empty array of 1 to 10 tags to insert")
+        .withMessage(`body parameter ${bodyParamName} must be a non-empty array of 1 to 10 tags to insert`)
         .bail()
         .customSanitizer(value => {
             const set = new Set<String>();
@@ -67,7 +69,7 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
 const createArtistListValidator = (bodyParamName:string, maxSize: number) => {
     return body(bodyParamName).exists()
         .isArray({min: 1, max: maxSize})
-        .withMessage(`must be a non-empty array of 1 to ${maxSize} artists to insert`)
+        .withMessage(`body parameter ${bodyParamName} must be a non-empty array of 1 to ${maxSize} artists to insert`)
         .bail()
         .customSanitizer(value => {
             const set = new Set<String>();
@@ -82,10 +84,6 @@ const createArtistListValidator = (bodyParamName:string, maxSize: number) => {
                 }
             })
             return newArr;
-            // const arr = value as Array<String>;
-            // return arr.map((el, _) => {
-            //     return el.trim()
-            // })
         })
         .custom(value => {
             const arr = value as Array<String>;
@@ -101,7 +99,7 @@ const createArtistListValidator = (bodyParamName:string, maxSize: number) => {
 const createSourceUrlValidator= (urlParamName:string, optional: boolean = false) => {
     const chain = body(urlParamName)
         .isURL()
-        .withMessage("invalid url")
+        .withMessage(`body parameter ${urlParamName} should be a valid URL`);
 
     if (optional) {
         chain.optional()
@@ -115,6 +113,7 @@ const createArtistValidator = (artistParamName:string, optional: boolean = false
         .trim()
         .notEmpty()
         .bail()
+        .withMessage(`body parameter ${artistParamName} should be a non-empty string`)
         .custom(value => {
             if (!isValidArtistName(value)) {
                 return Promise.reject(`${value} is not a valid artist name`)
@@ -129,15 +128,16 @@ const createArtistValidator = (artistParamName:string, optional: boolean = false
 }
 
 const createBoolValidator = (bodyParamName: string, optional: boolean = false) => {
-    const chain = body(bodyParamName).isBoolean().toBoolean()
+    const chain = body(bodyParamName)
+        .isBoolean()
+        .withMessage(`body parameter ${bodyParamName} should be a boolean`)
+        .toBoolean();
 
     if (optional) {
-        chain.optional()
+        chain.optional();
     }
     return chain
 }
-
-// TODO: add withMessgae() to other checks
 
 const createStringQueryParamValidator = (queryParamName: string) => {
     return query(queryParamName)

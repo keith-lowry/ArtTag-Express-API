@@ -1,29 +1,36 @@
 import express from "express";
 import type { RequestHandler, ErrorRequestHandler } from "express";
 import { repo } from "./db/repository.mjs";
-// import { isValidArtistName, isValidTagName } from "./types.mjs";
 import multer from "multer";
 import { MulterError } from "multer";
 import bodyParser from "body-parser";
-import { query, body, validationResult } from "express-validator";
+import { query, body, validationResult, type ErrorFormatter, type ValidationError } from "express-validator";
 import validators from "./validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import fs from "fs";
-import { error } from "console";
-
-// TODO: use proper express error handling
-// https://expressjs.com/en/guide/error-handling.html
+import { error, time } from "console";
+import type { NextFunction, Response } from 'express-serve-static-core';
+import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
+import { asyncHandler } from "./helpers.mjs";
+import * as proxyController from "./controllers/proxy-controller.mjs";
+import cors from "cors";
 
 
 const app = express();
 const port = 3000;
 
+app.use(cors({
+    origin: "http://localhost:5173"
+}));
+
 if (!fs.existsSync(config.imagesFolder)) {
     fs.mkdirSync(config.imagesFolder);
-    console.info(`[STARTUP] Made images folder ${config.imagesFolder}`)
+    const time = new Date().toISOString();
+    console.info(`[${time}] STARTUP Made images folder ${config.imagesFolder}`)
 }
 else {
-    console.info(`[STARTUP] Using images folder ${config.imagesFolder}`)
+    const time = new Date().toISOString();
+    console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
 }
 
 const imageStorage = multer.memoryStorage()
@@ -71,6 +78,12 @@ const handleUploadParsing:RequestHandler = (req, res, next) => {
     })
 }
 
+const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
+    
+
+    return "TODO";
+}
+
 /**
  * Middleware to check if validation result is not empty. Stops
  * chain and sends 400 to client if true.
@@ -82,15 +95,46 @@ const handleValidationCheck:RequestHandler = (req, res, next) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
         // console.log(result)
-        res.statusCode = 400;
-        res.send(result)
-        return
+        // const msg:string = result.formatWith<string>(errorFormatter);
+        // https://express-validator.github.io/docs/api/validation-result/#mapped
+        // NOTE: can check which type of error it is by checking "type" property
+        // console.log("VALIDATION ARRAY", result.array());
+        // console.log("VALIDATION MAPPED", result.mapped());
+        // TODO: should be json?
+        throw new HttpError(400, "invalid request", result.array({onlyFirstError: true}));
+        // TODO: use formatter for result to format as a string
     }
-    next();
+    else {
+        next();
+    }
 }
 
+/**
+ * Route logging middleware
+ * 
+ * Log the 
+ * - UTC time
+ * - request method
+ * - response status code
+ * - url
+ * - time to respond
+ * for every endpoint response
+ */
+app.use((req, res, next) => {
+    const start = Date.now();
+
+    res.on("finish", () => {
+        const timestamp = new Date().toISOString();
+        const duration = Date.now() - start;
+        console.log(
+            `[${timestamp}] ${res.statusCode} ${req.method} ${req.originalUrl} (${duration} ms)`
+        );
+    })
+    next();
+})
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
+
 
 
 app.get("/tags/list", 
@@ -143,11 +187,11 @@ app.get("/artists/list",
             res.send(data)
             return
         }
-        const data = await repo.getArtists()
-        res.send(data)
+        const data = await repo.getArtists();
+        res.send(data);
     }
     catch (error) {
-        res.statusCode = 500
+        res.statusCode = 500;
         res.send("Something went wrong");
         console.error(error);
     }
@@ -250,8 +294,66 @@ app.get("/images/similar", (req, res) => {
     // user can provide max distance as query param or in body
 })
 
-app.use("/images", express.static("public"))
+// GET /proxy/post: get list of image urls from a bsky or
+// X post
+app.get(
+    "/proxy/post", 
+    validators.stringQuery("url"), 
+    handleValidationCheck, 
+    asyncHandler(proxyController.getImagesFromPost)
+);
+
+// GET /proxy/image: get image data from an image URL that CORS
+// policy would otherwise deny
+app.get(
+    "/proxy/image",
+    validators.stringQuery("url"),
+    handleValidationCheck,
+    asyncHandler(proxyController.getImageFromURL)
+)
+
+/**
+ * Global error handler for errors thrown by (possibly asynchronous)
+ * middleware.
+ * 
+ * @param err Error, ideally an instance of HttpError
+ * @param req The Request
+ * @param res The API's Response
+ * @param next Next middleware in the chain
+ * @returns 
+ */
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+    // handle case when request was already responded to by api
+    if (res.headersSent) {
+        console.log("HEADERS SENT ALREADY ERR");
+        return next(err);
+    }
+
+    // log timestamp, request method, and url
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}]`, req.method + " " + req.originalUrl, err);
+
+    // generic error, just respond with 500
+    if (!isHttpError(err)) {
+        console.log("IS NOT HTTP ERROR", err);
+        res.status(500).json({"error" : "Internal server error"});
+        return;
+    }
+
+    // http error - send response with details and status code
+    const httperr = err as HttpError;
+    // NOTE: if status is not in error range, just use 500 as a catch-all
+    const statusCode = (httperr.status >= 400 && httperr.status <= 511)? httperr.status : 500;
+    res.status(statusCode).json({
+        "error" : httperr.message,
+        "details" : httperr.details
+    })
+}
+
+// use a global error handler
+app.use(errorHandler);
 
 app.listen(port, () => {
-    console.info(`[READY] API listening on port ${port}`);
+    const start = new Date().toISOString();
+    console.info(`[${start}] READY: API listening on port ${port}`);
 })

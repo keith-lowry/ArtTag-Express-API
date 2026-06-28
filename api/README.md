@@ -11,3 +11,7 @@ API for serving stored art from Postgres DB.
 ## Useful Dev Commands
 
 - `npm run watch` or `tsc --watch`: watch ts files and auto build to js
+
+
+# TODO
+- Make automatic tests for verifying that changes dont mess with retrieving image previews / endpoints - automatically test requests to endpoints for go-path and invalid requests that should be rejected!

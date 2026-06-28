@@ -15,51 +15,7 @@ export interface Artist {
 }
 
 export interface XPostInfo {
-    photos: Array<XImageInfo>,
-    user: XPostUserInfo
-}
-
-export interface XPostUserInfo {
-    id_str : string,
-    name : string,
-    screen_name: string,
-    is_blue_verified: boolean,
-    profile_image_shape: string,
-    verified: boolean,
-    profile_image_url_https: string
-}
-
-/**
- * Type guard for XPostUserInfo type
- * @param o Unkown object
- * @returns True if o is of type XPostUserInfo
- */
-export function isXPostUserInfo(o:unknown): o is XPostUserInfo {
-    if (o === null 
-        || typeof o !== "object"
-        || !Object.keys(o).includes("id_str")
-        || !Object.keys(o).includes("name")
-        || !Object.keys(o).includes("screen_name")
-        || !Object.keys(o).includes("is_blue_verified")
-        || !Object.keys(o).includes("profile_image_shape")
-        || !Object.keys(o).includes("verified")
-        || !Object.keys(o).includes("profile_image_url_https")) {
-            return false;
-    }
-
-    const uinfo = o as XPostUserInfo;
-
-    if (!isString(uinfo.id_str)
-        || !isString(uinfo.name)
-        || !isString(uinfo.screen_name)
-        || typeof uinfo.is_blue_verified !== "boolean"
-        || !isString(uinfo.profile_image_shape)
-        || typeof uinfo.verified !== "boolean"
-        || !isString(uinfo.profile_image_url_https)) {
-            return false;
-    }
-
-    return true;
+    photos: Array<XImageInfo>
 }
 
 /**
@@ -70,8 +26,7 @@ export function isXPostUserInfo(o:unknown): o is XPostUserInfo {
 export function isXPostInfo(o: unknown): o is XPostInfo {
     if (o === null 
         || typeof o !== "object" 
-        || !Object.keys(o).includes("photos")
-        || !Object.keys(o).includes("user")) {
+        || !Object.keys(o).includes("photos")) {
         return false;
     }
     const info = o as XPostInfo;
@@ -82,11 +37,6 @@ export function isXPostInfo(o: unknown): o is XPostInfo {
 
     // only test 1st entry in photos array
     if (info.photos.length > 0 && !isXImageInfo(info.photos[0])) {
-        return false;
-    }
-
-    // check that user info matches interface we expect
-    if (!isXPostUserInfo(info.user)) {
         return false;
     }
 
@@ -312,9 +262,6 @@ export function isHttpError(o:unknown): o is HttpError {
         return false;
     }
 
-    // const keys = Object.keys(o);
-    Object.keys
-    // console.log(keys);
     if (!(Object.hasOwn(o, "status")
         && Object.hasOwn(o, "message"))) {
         return false;
@@ -351,6 +298,41 @@ export interface ScrapedImage {
     // filename: string
 }
 
+export function isScrapedImage(o:unknown): o is ScrapedImage {
+    if (!isObject(o)) {
+        return false;
+    }
+
+    if (!(Object.hasOwn(o, "postUrl")
+        && Object.hasOwn(o, "imgUrl")
+        && Object.hasOwn(o, "postAuthor")))
+        // && Object.hasOwn(o, "filename"))) 
+    {
+        return false;
+    }
+
+    const scraped = o as ScrapedImage;
+
+    if (!(isString(scraped.postUrl, true)
+        && isString(scraped.imgUrl, true)
+        && isString(scraped.postAuthor)))
+        // && isString(scraped.filename))) 
+    {
+        return false;
+    }
+
+    // verify img url is a valid url
+    try {
+        new URL(scraped.imgUrl);
+    }
+    catch {
+        return false;
+    }
+
+    return true;
+
+}
+
 /**
  * Checks if a given string is a valid tag name that can be stored.
  * @param tag string
@@ -371,9 +353,13 @@ export function isValidArtistName(artist:String):boolean{
 
 /**
  * Type guard for string type
- * @param value 
- * @returns  boolean
+ * @param value value to check
+ * 
+ * @returns  boolean True if value is a String
  */
-export function isString(value: unknown): value is string {
+export function isString(value: unknown, nonempty: boolean = false): value is string {
+    if (nonempty) {
+        return typeof value === "string" && value.length !== 0;
+    }
     return typeof value === "string";
 }

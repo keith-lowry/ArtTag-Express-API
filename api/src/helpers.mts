@@ -10,6 +10,8 @@ import { type Request, type Response, type NextFunction, type RequestHandler } f
  */
 export function asyncHandler(fn: RequestHandler): RequestHandler {
     return (req: Request, res: Response, next: NextFunction) => {
+        // call handler, catch any errors and pass to the next
+        // error handler in the chain
         Promise.resolve(fn(req, res, next)).catch(next);
     }
 }

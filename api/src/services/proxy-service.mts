@@ -70,7 +70,8 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
             postAuthor: postAuthorUsername,
             // NOTE: bsky image links don't include file extension
             // just leave blank, not really necessary
-            filename: ""
+            // NOTE: commenting out as filename is not needed rn
+            // filename: ""
         }
     });
 }
@@ -108,6 +109,7 @@ export async function getXPostImageURLs(url:string): Promise<ScrapedImage[]> {
     const photosArr = info.photos;
     let urls = photosArr.flatMap((val) => {
         const link = val["url"];
+        // NOTE: commenting out as filename is not needed rn
         // let filename = link.split("/").pop();
         // if (typeof  filename !== 'string') {
         //     filename = "failedToGetFilename!!!";

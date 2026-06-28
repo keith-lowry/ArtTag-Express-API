@@ -17,7 +17,11 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
     const getDIDEndpoint = GET_PROFILE_ENDPOINT + "?actor=" + userHandle;
 
     let data = await fetch(getDIDEndpoint);
-    // TODO: check status
+
+    // non-200 status from bsky profile endpoint
+    if (!data.ok) {
+        throw new HttpError(500, `got response status ${data.status} from bsky profile endpoint`);
+    }
     let json = await data.json();
 
     if (!isBskyProfileInfo(json)) {
@@ -30,7 +34,11 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
     const getPostImagesEndpoint = GET_POST_ENDPOINT + "?uri=" + atURI + "&depth=0";
 
     data = await fetch(getPostImagesEndpoint);
-    // TODO: check status
+
+    // non-200 status from bsky api
+    if (!data.ok) {
+        throw new HttpError(500, `got response status ${data.status} from bsky post endpoint`);
+    }
     json = await data.json();
 
     if (!isBskyPostInfo(json)) {

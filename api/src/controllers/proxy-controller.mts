@@ -19,7 +19,7 @@ const TWIT_IMG_URL_RE = /^https:\/\/pbs\.twimg\.com\/media\/[\w\.]+$/
 const BSKY_IMG_URL_RE = /^https:\/\/cdn\.bsky\.app\/img\/feed_fullsize\/plain\/did:plc:[\w]+\/[\w]+@[\w]+$/
 
 /**
- * Fetch and respond with an array of scraped images from the given
+ * Fetch and respond with an array of scraped image URLs from the given
  * social media url present on the request's params.
  * 
  * Assumes that req.query.url is present and is a string.
@@ -48,8 +48,15 @@ export async function getImagesFromPost(req: Request, res: Response) {
     }
 }
 
-export async function getImageFromURL(req: Request, res: Response) {
 
+/**
+ * Get the image content from a URL that would otherwise be rejected
+ * by the browser's CORS policy.
+ * 
+ * @param req Request - should have url as query string
+ * @param res Response - piped image content from the provided url, if possible
+ */
+export async function getImageFromURL(req: Request, res: Response) {
     const url = req.query.url as string;
     // https://pbs.twimg.com/media/HBhZbR4a0AAuO0I.jpg
 
@@ -57,6 +64,7 @@ export async function getImageFromURL(req: Request, res: Response) {
         throw new HttpError(400, "invalid image url in request");
     }
 
+    // get headers of the client provided url
     const data = await fetch(url, {
         "method" : "head"
     });
@@ -65,14 +73,19 @@ export async function getImageFromURL(req: Request, res: Response) {
         throw new HttpError(500, "failed to fetch headers from image url");
     }
 
-    // TODO: double check headers keys exist
-
     const contentType = data.headers.get("content-type");
+    if (contentType === null) {
+        throw new HttpError(500, "failed to get content type of requested proxy");
+    }
     if (!contentType?.startsWith("image/")) {
         throw new HttpError(400, "requested proxy is not for an image");
     }
 
-    const imgSizeBytes = Number(data.headers.get("content-length"));
+    const imgSizeStr = data.headers.get("content-length");
+    if (imgSizeStr === null) {
+        throw new HttpError(500, "failed to get content length of requested proxy");
+    }
+    const imgSizeBytes = Number(imgSizeStr);
     if (imgSizeBytes > (config.maxFileSizeMB * 1000000)) {
         throw new HttpError(400, "requested image to proxy is too large");
     }
@@ -84,7 +97,6 @@ export async function getImageFromURL(req: Request, res: Response) {
 
     const bytes = await bodyData.bytes()
     
-
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Length", imgSizeBytes);
     res.end(bytes);

@@ -15,6 +15,16 @@ const createEpochValidator = (paramName:string) => {
         .withMessage(`query parameter ${paramName} must be greater than or equal to 0`);
 }
 
+/**
+ * Creates a validator that checks if the tags list param
+ * provided in the request body exists, has at least 1 entry
+ * and no more than maxSize entries, and contains all valid tag
+ * names.
+ * @param artistParamName Name of body param that should contain an artist name
+ * @param optional Is the artist body param optional?
+ * @param isForm
+ * @returns Validator for checking tags list body param on request
+ */
 const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: boolean = false) => {
 
     const chain = body(bodyParamName)
@@ -37,6 +47,9 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
         })
     }
 
+    // NOTE: do not need to re-assign to chain variable
+    // chain functions modify the chain object in-place
+    
     chain.isArray({min: 1, max: maxSize})
         .withMessage(`body parameter ${bodyParamName} must be a non-empty array of 1 to 10 tags to insert`)
         .bail()
@@ -107,6 +120,13 @@ const createSourceUrlValidator= (urlParamName:string, optional: boolean = false)
     return chain;
 }
 
+/**
+ * Creates a validator that checks if the artist name
+ * provided in the request body exists and is valid.
+ * @param artistParamName Name of body param that should contain an artist name
+ * @param optional Is the artist body param optional?
+ * @returns Validator for checking arist name body param on request
+ */
 const createArtistValidator = (artistParamName:string, optional: boolean = false) => {
     const chain = body(artistParamName)
         .isString()

@@ -1,8 +1,7 @@
 import express from "express";
 import type { RequestHandler, ErrorRequestHandler } from "express";
 import { repo } from "./db/repository.mjs";
-import multer from "multer";
-import { MulterError } from "multer";
+import { handleUploadParsing, handleValidationCheck, asyncHandler  } from "./helpers.mjs";
 import bodyParser from "body-parser";
 import { query, body, validationResult, type ErrorFormatter, type ValidationError } from "express-validator";
 import validators from "./validators.mjs";
@@ -10,8 +9,7 @@ import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error, time } from "console";
 import type { NextFunction, Response } from 'express-serve-static-core';
-import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isHttpError, isString, isTweetTombstone, isXPostInfo, type XPostInfo } from "./types.mjs";
-import { asyncHandler } from "./helpers.mjs";
+import { HttpError, isHttpError} from "./types.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
 import cors from "cors";
 
@@ -23,91 +21,9 @@ app.use(cors({
     origin: "http://localhost:5173"
 }));
 
-if (!fs.existsSync(config.imagesFolder)) {
-    fs.mkdirSync(config.imagesFolder);
-    const time = new Date().toISOString();
-    console.info(`[${time}] STARTUP Made images folder ${config.imagesFolder}`)
-}
-else {
-    const time = new Date().toISOString();
-    console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
-}
-
-const imageStorage = multer.memoryStorage()
-const imageUpload = multer({storage : imageStorage, limits : {
-    fileSize: config.maxFileSizeMB * 1000000,
-    files: 1
-}}).single("image")
-
-/**
- * Handles the parsing of a multipart form data request body using
- * multer. Breaks the chain and sends an error code to client 
- * if something goes wrong.
- * 
- * @param req Request
- * @param res Response
- * @param next Next middleware in chain
- */
-const handleUploadParsing:RequestHandler = (req, res, next) => {
-    imageUpload(req, res, (err) => {
-        // NOT OK: something went wrong with img upload
-        if (err instanceof multer.MulterError) {
-            const e = err as multer.MulterError
-            if (e.code === 'LIMIT_FILE_SIZE') {
-                console.info(`[INFO] Rejected file greater than ${config.maxFileSizeMB}MB in size`)
-                res.status(413).send(`Your file was larger than the max file size of ${config.maxFileSizeMB}MB`)
-                return
-            }
-            if (e.code === 'LIMIT_FILE_COUNT') {
-                console.info('[INFO] Received request with more than one file')
-                res.status(400).send('Only one image file is expected')
-                return
-            }
-            console.log(err)
-            res.status(500).send("Oops! Something unexpected happened")
-            return
-        }
-        else if (err) {
-            res.status(500).send("Oops! Something unexpected happened")
-            console.log(err)
-            return
-        }
-
-        // OK: go to next middleware
-        next();
-    })
-}
-
-const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
-    
-
-    return "TODO";
-}
-
-/**
- * Middleware to check if validation result is not empty. Stops
- * chain and sends 400 to client if true.
- * @param req Request
- * @param res Response
- * @param next Next middleware in chain
- */
-const handleValidationCheck:RequestHandler = (req, res, next) => {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-        // console.log(result)
-        // const msg:string = result.formatWith<string>(errorFormatter);
-        // https://express-validator.github.io/docs/api/validation-result/#mapped
-        // NOTE: can check which type of error it is by checking "type" property
-        // console.log("VALIDATION ARRAY", result.array());
-        // console.log("VALIDATION MAPPED", result.mapped());
-        // TODO: should be json?
-        throw new HttpError(400, "invalid request", result.array({onlyFirstError: true}));
-        // TODO: use formatter for result to format as a string
-    }
-    else {
-        next();
-    }
-}
+// const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
+//     return "TODO";
+// }
 
 /**
  * Route logging middleware
@@ -136,7 +52,7 @@ app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
 
 
-
+// GET /tags/list: get a list of tags in DB
 app.get("/tags/list", 
     validators.epoch("created_after"), 
     handleValidationCheck, 
@@ -159,22 +75,24 @@ app.get("/tags/list",
     }
 })
 
-app.put("/tags/create", 
-    validators.taglist("tags", config.maxArrLen), 
-    handleValidationCheck, 
-    async (req, res) => {
+// app.put("/tags/create", 
+//     validators.taglist("tags", config.maxArrLen), 
+//     handleValidationCheck, 
+//     async (req, res) => {
 
-    try {
-        await repo.insertTags(req.body.tags)
-        res.status(200).send()
-    }
-    catch (error) {
-        res.statusCode = 500
-        res.send("Something went wrong");
-        console.error("[ERROR] /tags/create:", error)
-    }
-})
+//     try {
+//         await repo.insertTags(req.body.tags)
+//         res.status(200).send()
+//     }
+//     catch (error) {
+//         res.statusCode = 500
+//         res.send("Something went wrong");
+//         console.error("[ERROR] /tags/create:", error)
+//     }
+// })
 
+
+// GET /artists/list: get a list of artists in DB
 app.get("/artists/list",
     validators.epoch("created_after"), 
     handleValidationCheck,
@@ -197,37 +115,35 @@ app.get("/artists/list",
     }
 })
 
-app.put("/artists/create", 
-    validators.artistlist("artists", config.maxArrLen), 
-    handleValidationCheck, 
-    async (req, res) => {
+// app.put("/artists/create", 
+//     validators.artistlist("artists", config.maxArrLen), 
+//     handleValidationCheck, 
+//     async (req, res) => {
 
-    try {
-        // const result = validationResult(req);
+//     try {
+//         // const result = validationResult(req);
 
-        // // artist name failed validation or does not exist
-        // if (!result.isEmpty()) {
-        //     console.log(result)
-        //     res.statusCode = 400;
-        //     res.send(result)
-        //     return
-        // }
-        // console.log(req.body.artists)
+//         // // artist name failed validation or does not exist
+//         // if (!result.isEmpty()) {
+//         //     console.log(result)
+//         //     res.statusCode = 400;
+//         //     res.send(result)
+//         //     return
+//         // }
+//         // console.log(req.body.artists)
         
-        await repo.insertArtists(req.body.artists)
-        res.status(200).send()
-    }
-    catch (error) {
-        res.statusCode = 500
-        res.send("Something went wrong");
-        console.error("[ERROR] /artists/create:", error)
-    }
-})
-
+//         await repo.insertArtists(req.body.artists)
+//         res.status(200).send()
+//     }
+//     catch (error) {
+//         res.statusCode = 500
+//         res.send("Something went wrong");
+//         console.error("[ERROR] /artists/create:", error)
+//     }
+// })
 
 app.post("/images/create", 
-    // imageUpload.single("image"), 
-    handleUploadParsing,
+    asyncHandler(handleUploadParsing),
     validators.artist("artist", true), 
     validators.taglist("tags", config.maxArrLen, true), 
     validators.srcUrl("src", true),
@@ -354,6 +270,17 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 app.use(errorHandler);
 
 app.listen(port, () => {
+    // set up images folder
+    if (!fs.existsSync(config.imagesFolder)) {
+        fs.mkdirSync(config.imagesFolder);
+        const time = new Date().toISOString();
+        console.info(`[${time}] STARTUP: Made images folder ${config.imagesFolder}`)
+    }
+    else {
+        const time = new Date().toISOString();
+        console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
+    }
+
     const start = new Date().toISOString();
     console.info(`[${start}] READY: API listening on port ${port}`);
 })

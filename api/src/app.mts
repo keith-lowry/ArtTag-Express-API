@@ -12,6 +12,7 @@ import type { NextFunction, Response } from 'express-serve-static-core';
 import { HttpError, isHttpError} from "./types.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
 import cors from "cors";
+import { dbSetup } from "./db/pool.mjs"
 
 
 const app = express();
@@ -269,7 +270,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 // use a global error handler
 app.use(errorHandler);
 
-app.listen(port, () => {
+app.listen(port, async () => {
     // set up images folder
     if (!fs.existsSync(config.imagesFolder)) {
         fs.mkdirSync(config.imagesFolder);
@@ -280,6 +281,10 @@ app.listen(port, () => {
         const time = new Date().toISOString();
         console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
     }
+
+    // set up db connection
+    await dbSetup();
+    
 
     const start = new Date().toISOString();
     console.info(`[${start}] READY: API listening on port ${port}`);

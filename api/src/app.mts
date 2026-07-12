@@ -13,6 +13,7 @@ import { HttpError, isHttpError} from "./types.mjs";
 import * as proxyController from "./controllers/proxy-controller.mjs";
 import cors from "cors";
 import { dbSetup } from "./db/pool.mjs"
+import { newImage } from "./controllers/images-controller.mjs";
 
 
 const app = express();
@@ -144,65 +145,18 @@ app.get("/artists/list",
 // })
 
 app.post("/images/create", 
+    // parse multipart form data
+    // TODO: error for file parsing is not being passed to error
+    // handler properly!
     asyncHandler(handleUploadParsing),
+    // validate request content
     validators.artist("artist", true), 
     validators.taglist("tags", config.maxArrLen, true), 
     validators.srcUrl("src", true),
-    validators.bool("nsfw", true),
+    validators.bool("nsfw", false),
     handleValidationCheck,
-    async (req, res) => {
-
-    try {
-        // File validations
-        if (!req.file) {
-            res.status(400).send("no file attached");
-            return;
-        }
-        if (!req.file.mimetype.startsWith("image/", 0)) {
-            res.status(400).send("file must be an image")
-            return
-        }
-
-        // Check text params are valid
-        // const result = validationResult(req);
-        // if (!result.isEmpty()) {
-        //     console.log(result)
-        //     res.statusCode = 400;
-        //     res.send(result)
-        //     return
-        // }
-
-        // vvv TODO: move this check to tags list validator vvv
-        const tagsExist = await repo.hasTags(req.body.tags) // make sure provided tags are in DB
-        if (!tagsExist) {
-            res.status(400)
-                .send("at least one provided tag does not exist");
-            return
-        }
-        
-        if (req.body.artist) {
-            const artistExists = await repo.hasArtist(req.body.artist) // make sure provided artist is in DB
-            if (!artistExists) {
-                res.status(400)
-                .send(`provided artist does not exist`)
-                return
-            }
-        }
-
-        const filetype = req.file.mimetype.split("/")[1].toLowerCase()
-
-        // TODO: replace with call to phash
-        const hash = "1111111111111111111111111111111111111111111111111111111111111111"
-
-        const qres = await repo.insertImage(req.file.buffer, filetype, req.body.tags, hash, req.body.artist, req.body.src, req.body.nsfw)
-        // console.log(qres)
-        res.status(200).send(qres)
-    }
-    catch (error) {
-        res.status(500).send("Something went wrong");
-        console.error("[ERROR] /images/create:", error)
-    }
-})
+    asyncHandler(newImage)
+);
 
 app.get("/images/similar", (req, res) => {
     res.send("TODO: GET similar endpoint");

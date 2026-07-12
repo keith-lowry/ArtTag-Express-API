@@ -1,7 +1,17 @@
-export interface Image {
+
+/**
+ * Info associated with a stored image file.
+ */
+export interface StoredImage {
     image_id: BigInt,
     filename: string,
+    file_type: string
+    src_url: string,
+    artist: string,
+    nsfw: boolean,
     hash: string,
+    time_created: string,
+    last_updated: string,
 }
 
 export interface Tag {

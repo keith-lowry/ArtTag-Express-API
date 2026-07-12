@@ -41,40 +41,29 @@ const imageUpload = multer({storage : imageStorage, limits : {
 export const handleUploadParsing:RequestHandler = (req, res, next) => {
     // pass request to multer middleware
     imageUpload(req, res, (err) => {
-        // NOT OK: something went wrong with img upload and MulterError was thrown
-        if (err instanceof multer.MulterError) {
-            const multerErr = err as multer.MulterError
-            if (multerErr.code === 'LIMIT_FILE_SIZE') {
-                // console.info(`[INFO] Rejected file greater than ${config.maxFileSizeMB}MB in size`)
-                // res.status(413).send(`Your file was larger than the max file size of ${config.maxFileSizeMB}MB`)
-                // return
-                throw new HttpError(413, `Your file was larger than the max file size of ${config.maxFileSizeMB}MB`, multerErr);
-            }
-            else if (multerErr.code === 'LIMIT_FILE_COUNT') {
-                // console.info('[INFO] Received request with more than one file')
-                // res.status(400).send('Only one image file is expected')
-                // return
-                throw new HttpError(400, 'Only one image file is expected', multerErr);
+        // NOTE: since this is the next() function called by imageUpload(), err is possibly
+        // undefined. Clean up this error for next middleware in the chain if it exists.
+        let prettyError = null; // Default to null in case err does not exist.
+        if (err) {
+            if (err instanceof multer.MulterError) {
+                const multerErr = err as multer.MulterError
+                if (multerErr.code === 'LIMIT_FILE_SIZE') {
+                    prettyError = new HttpError(413, `Your file was larger than the max file size of ${config.maxFileSizeMB}MB`, multerErr);
+                }
+                else if (multerErr.code === 'LIMIT_FILE_COUNT') {
+                    prettyError = new HttpError(400, 'Too many files: request should only have 1 image file', multerErr);
+                }
+                else {
+                    prettyError = new HttpError(500, "Something unexpected happened", multerErr);
+                }
             }
             else {
-                console.error(err)
-                // res.status(500).send("Oops! Something unexpected happened")
-                // return
-                throw new HttpError(500, "Something unexpected happened", multerErr);
+                prettyError = new HttpError(500, "Something unexpected happened", err);
             }
         }
-        // Some other error object was thrown
-        else if (err) {
-            // res.status(500).send("Oops! Something unexpected happened")
-            console.error(err)
-            // return
-            throw new HttpError(500, "Something unexpected happened", err);
 
-        }
-
-        // TODO: uh shouldn't we always get an error object in this callback? double check
-        // OK: go to next middleware
-        next();
+        // pass (possibly null) pretty error to next middleware
+        next(prettyError);
     })
 }
 

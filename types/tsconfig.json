@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        /* Base Options: */
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "target": "es2022",
+        "allowJs": true,
+        "moduleDetection": "force",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+    
+        /* Strictness */
+        "strict": true,
+        // "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noImplicitAny": true,
+    
+        /* If transpiling with TypeScript: */
+        "module": "NodeNext",
+        "outDir": "build",
+        "rootDir": "src",
+        // "sourceMap": true,
+    
+        /* If your code doesn't run in the DOM: */
+        "lib": ["es2022"],
+        "types": ["node"],
+
+        // /* Allow this project to be referenced in api and site projects */
+        // "declaration": true,
+        // "declarationMap": true,
+        "composite": true
+      },
+      "include": ["src/**/*"],
+      /* NOTE: need empty references array so this project can be referenced elsewhere */
+    //   "references": []
+}

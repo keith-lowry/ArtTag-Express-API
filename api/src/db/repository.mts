@@ -1,4 +1,4 @@
-import { type Tag, type StoredImage, type Artist } from "../types.mjs"
+import { type Tag, type StoredImage, type Artist } from "@arttag/types"
 import { query } from "./pool.mjs"
 import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';

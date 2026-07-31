@@ -9,7 +9,7 @@ import config from "../config.json" with { type: 'json' };
 import fs from "fs";
 import { error, time } from "console";
 import type { NextFunction, Response } from 'express-serve-static-core';
-import { HttpError, isHttpError} from "./types.mjs";
+import { HttpError, isHttpError} from "@arttag/types";
 import * as proxyController from "./controllers/proxy-controller.mjs";
 import cors from "cors";
 import { dbSetup } from "./db/pool.mjs"

@@ -1,5 +1,5 @@
 
-import { type Tag, type StoredImage, type Artist, HttpError } from "../types.mjs"
+import { type Tag, type StoredImage, type Artist, HttpError } from "@arttag/types"
 import { query } from "../db/pool.mjs"
 import config from "../../config.json" with {type : 'json'}
 import format from 'pg-format';

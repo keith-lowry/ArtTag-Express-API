@@ -2,7 +2,7 @@ import { type Request, type Response, type NextFunction, type RequestHandler } f
 import multer from "multer";
 import config from "../config.json" with { type: 'json' };
 import { query, body, validationResult, type ErrorFormatter, type ValidationError } from "express-validator";
-import { HttpError } from "./types.mjs";
+import { HttpError } from "@arttag/types";
 
 
 

@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { HttpError } from "../types.mjs";
+import { HttpError } from "@arttag/types";
 import config from "../../config.json" with { type: 'json' };
 
 

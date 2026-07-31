@@ -1,0 +1,19 @@
+{
+  "name": "@arttag/types",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./build/index.mjs",
+  "types": "./build/index.d.mts",
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}

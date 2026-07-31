@@ -1,4 +1,4 @@
-import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isTweetTombstone, isXPostInfo, type BskyImage, type ScrapedImage, type XPostInfo } from "../types.mjs";
+import { HttpError, isBskyImage, isBskyImagePost, isBskyPostInfo, isBskyProfileInfo, isTweetTombstone, isXPostInfo, type BskyImage, type ScrapedImage, type XPostInfo } from "@arttag/types";
 
 const GET_PROFILE_ENDPOINT = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile";
 const GET_POST_ENDPOINT = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread";

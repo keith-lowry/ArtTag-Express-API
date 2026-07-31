@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { HttpError, type StoredImage } from "../types.mjs";
+import { HttpError, type StoredImage } from "@arttag/types";
 import config from "../../config.json" with { type: 'json' };
 import { storeArtist, storeImage, storeTags } from "../services/store-service.mjs";
 import { getImageHash64 } from "../services/hashing-service.mjs";

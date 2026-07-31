@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isScrapedImage, type ScrapedImage } from "../types";
+import {isScrapedImage, type ScrapedImage} from "@arttag/types";
 
 function isUrl(s:string): boolean {
     try {

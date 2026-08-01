@@ -1,6 +1,6 @@
 import { query, body, param } from "express-validator";
 import { isValidArtistName, isValidTagName } from "@arttag/types";
-import config from "../config.json" with {type : 'json'}
+import config from "../../config.json" with {type : 'json'}
 
 const createEpochValidator = (paramName:string) => {
     return query(paramName)

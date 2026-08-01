@@ -1,9 +1,9 @@
 import { type Request, type Response } from "express";
 import { HttpError } from "@arttag/types";
-import config from "../../config.json" with { type: 'json' };
+import config from "../../../config.json" with { type: 'json' };
 
 
-import * as proxyService from '../services/proxy-service.mjs';
+import * as proxyService from './proxy-service.mjs';
 
 // regex for matching x post link
 const X_POST_URL_RE = /^https:\/\/(fixupx|x|twitter|fxtwitter)\.com\/[\w]+\/status\/\d+$/

@@ -1,9 +1,15 @@
 import { type Request, type Response } from "express";
 import { HttpError, type StoredImage } from "@arttag/types";
-import config from "../../config.json" with { type: 'json' };
-import { storeArtist, storeImage, storeTags } from "../services/store-service.mjs";
-import { getImageHash64 } from "../services/hashing-service.mjs";
+import { storeArtist, storeImage, storeTags } from "./store-service.mjs";
+import { getImageHash64 } from "./hashing-service.mjs";
 
+/**
+ * Get a list of images that are visually similar to that
+ * attached to the body of the request in decreasing order of similarity.
+ */
+export async function getSimilarImages(req: Request, res:Response): Promise<void> {
+    res.send("TODO");
+}
 
 /**
  * Store an image.

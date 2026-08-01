@@ -1,12 +1,11 @@
 
 import { type Tag, type StoredImage, type Artist, HttpError } from "@arttag/types"
-import { query } from "../db/pool.mjs"
-import config from "../../config.json" with {type : 'json'}
+import { query } from "../../db/pool.mjs"
+import config from "../../../config.json" with {type : 'json'}
 import format from 'pg-format';
 import type { QueryResult } from "pg";
 import fs from "fs/promises";
 import path from "path";
-import { newImage } from "../controllers/images-controller.mjs";
 
 const schema = config.schema
 

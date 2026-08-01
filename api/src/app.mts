@@ -1,19 +1,18 @@
 import express from "express";
-import type { RequestHandler, ErrorRequestHandler } from "express";
-import { repo } from "./db/repository.mjs";
-import { handleUploadParsing, handleValidationCheck, asyncHandler  } from "./helpers.mjs";
+import { handleUploadParsing } from "./middleware/multer-parser.mjs";
+import {handleValidationCheck} from "./middleware/validation-check.mjs";
+import { asyncHandler } from "./utils/async-wrapper.mjs";
 import bodyParser from "body-parser";
-import { query, body, validationResult, type ErrorFormatter, type ValidationError } from "express-validator";
-import validators from "./validators.mjs";
+import validators from "./middleware/validators.mjs";
 import config from "../config.json" with { type: 'json' };
-import fs from "fs";
-import { error, time } from "console";
-import type { NextFunction, Response } from 'express-serve-static-core';
-import { HttpError, isHttpError} from "@arttag/types";
-import * as proxyController from "./controllers/proxy-controller.mjs";
+import { startUp } from "./utils/startup.mjs";
+import * as proxyController from "./features/image-scraping/proxy-controller.mjs";
 import cors from "cors";
-import { dbSetup } from "./db/pool.mjs"
-import { newImage } from "./controllers/images-controller.mjs";
+import { logRoute } from "./middleware/route-logging.mjs";
+import { errorHandler } from "./middleware/error-handler.mjs";
+import { createArtists, getArtists } from "./features/artists/artists-controller.mjs";
+import { createTags, getTags } from "./features/tags/tags-controller.mjs";
+import { getSimilarImages, newImage } from "./features/image-store/images-controller.mjs";
 
 
 const app = express();
@@ -27,127 +26,34 @@ app.use(cors({
 //     return "TODO";
 // }
 
-/**
- * Route logging middleware
- * 
- * Log the 
- * - UTC time
- * - request method
- * - response status code
- * - url
- * - time to respond
- * for every endpoint response
- */
-app.use((req, res, next) => {
-    const start = Date.now();
 
-    res.on("finish", () => {
-        const timestamp = new Date().toISOString();
-        const duration = Date.now() - start;
-        console.log(
-            `[${timestamp}] ${res.statusCode} ${req.method} ${req.originalUrl} (${duration} ms)`
-        );
-    })
-    next();
-})
+app.use(logRoute);
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
 
 
-// GET /tags/list: get a list of tags in DB
 app.get("/tags/list", 
     validators.epoch("created_after"), 
     handleValidationCheck, 
-    async (req, res) => {
+    asyncHandler(getTags));
 
-    try {
-        if (req.query?.created_after) {
-            const epoch:number = Number(req.query.created_after)
-            const data = await repo.getTagsCreatedAfter(epoch)
-            res.send(data)
-            return
-        }
-        const data = await repo.getTags()
-        res.send(data)
-    }
-    catch (error) {
-        res.statusCode = 500
-        res.send("Something went wrong");
-        console.error("[ERROR] /tags/list:",error);
-    }
-})
+app.put("/tags/create", 
+    validators.taglist("tags", config.maxArrLen), 
+    handleValidationCheck, 
+    asyncHandler(createTags));
 
-// app.put("/tags/create", 
-//     validators.taglist("tags", config.maxArrLen), 
-//     handleValidationCheck, 
-//     async (req, res) => {
-
-//     try {
-//         await repo.insertTags(req.body.tags)
-//         res.status(200).send()
-//     }
-//     catch (error) {
-//         res.statusCode = 500
-//         res.send("Something went wrong");
-//         console.error("[ERROR] /tags/create:", error)
-//     }
-// })
-
-
-// GET /artists/list: get a list of artists in DB
 app.get("/artists/list",
     validators.epoch("created_after"), 
     handleValidationCheck,
-    async (req, res) => {
+    asyncHandler(getArtists));
 
-    try {
-        if (req.query?.created_after) {
-            const epoch:number = Number(req.query.created_after)
-            const data = await repo.getArtistsCreatedAfter(epoch)
-            res.send(data)
-            return
-        }
-        const data = await repo.getArtists();
-        res.send(data);
-    }
-    catch (error) {
-        res.statusCode = 500;
-        res.send("Something went wrong");
-        console.error(error);
-    }
-})
-
-// app.put("/artists/create", 
-//     validators.artistlist("artists", config.maxArrLen), 
-//     handleValidationCheck, 
-//     async (req, res) => {
-
-//     try {
-//         // const result = validationResult(req);
-
-//         // // artist name failed validation or does not exist
-//         // if (!result.isEmpty()) {
-//         //     console.log(result)
-//         //     res.statusCode = 400;
-//         //     res.send(result)
-//         //     return
-//         // }
-//         // console.log(req.body.artists)
-        
-//         await repo.insertArtists(req.body.artists)
-//         res.status(200).send()
-//     }
-//     catch (error) {
-//         res.statusCode = 500
-//         res.send("Something went wrong");
-//         console.error("[ERROR] /artists/create:", error)
-//     }
-// })
+app.put("/artists/create", 
+    validators.artistlist("artists", config.maxArrLen), 
+    handleValidationCheck, 
+    asyncHandler(createArtists));
 
 app.post("/images/create", 
     // parse multipart form data
-    // TODO: error for file parsing is not being passed to error
-    // handler properly!
     asyncHandler(handleUploadParsing),
     // validate request content
     validators.artist("artist", true), 
@@ -158,12 +64,7 @@ app.post("/images/create",
     asyncHandler(newImage)
 );
 
-app.get("/images/similar", (req, res) => {
-    res.send("TODO: GET similar endpoint");
-    // get filenames of images within certain hamming distance of provided image url
-    // default: very very close distance (<= 2) to find duplicates
-    // user can provide max distance as query param or in body
-})
+app.get("/images/similar", asyncHandler(getSimilarImages));
 
 // GET /proxy/post: get list of image urls from a bsky or
 // X post
@@ -183,63 +84,10 @@ app.get(
     asyncHandler(proxyController.getImageFromURL)
 )
 
-/**
- * Global error handler for errors thrown by (possibly asynchronous)
- * middleware.
- * 
- * @param err Error, ideally an instance of HttpError
- * @param req The Request
- * @param res The API's Response
- * @param next Next middleware in the chain
- * @returns 
- */
-const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-    // handle case when request was already responded to by api
-    if (res.headersSent) {
-        console.log("HEADERS SENT ALREADY ERR");
-        return next(err);
-    }
-
-    // log timestamp, request method, and url
-    const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}]`, req.method + " " + req.originalUrl, err);
-
-    // generic error, just respond with 500
-    if (!isHttpError(err)) {
-        console.log("IS NOT HTTP ERROR", err);
-        res.status(500).json({"error" : "Internal server error"});
-        return;
-    }
-
-    // http error - send response with details and status code
-    const httperr = err as HttpError;
-    // NOTE: if status is not in error range, just use 500 as a catch-all
-    const statusCode = (httperr.status >= 400 && httperr.status <= 511)? httperr.status : 500;
-    res.status(statusCode).json({
-        "error" : httperr.message,
-        "details" : httperr.details
-    })
-}
 
 // use a global error handler
 app.use(errorHandler);
 
-app.listen(port, async () => {
-    // set up images folder
-    if (!fs.existsSync(config.imagesFolder)) {
-        fs.mkdirSync(config.imagesFolder);
-        const time = new Date().toISOString();
-        console.info(`[${time}] STARTUP: Made images folder ${config.imagesFolder}`)
-    }
-    else {
-        const time = new Date().toISOString();
-        console.info(`[${time}] STARTUP: Using images folder ${config.imagesFolder}`)
-    }
-
-    // set up db connection
-    await dbSetup();
-    
-
-    const start = new Date().toISOString();
-    console.info(`[${start}] READY: API listening on port ${port}`);
-})
+app.listen(port, () => {
+    startUp(port);
+});

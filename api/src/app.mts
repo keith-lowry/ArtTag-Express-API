@@ -1,15 +1,11 @@
 import express from "express";
-import { handleUploadParsing } from "./middleware/multer-parser.mjs";
-import {handleValidationCheck} from "./middleware/validation-check.mjs";
 import { asyncHandler } from "./utils/async-wrapper.mjs";
 import bodyParser from "body-parser";
-import validators from "./middleware/validators.mjs";
 import config from "../config.json" with { type: 'json' };
 import { startUp } from "./utils/startup.mjs";
 import * as proxyController from "./features/image-scraping/proxy-controller.mjs";
 import cors from "cors";
-import { logRoute } from "./middleware/route-logging.mjs";
-import { errorHandler } from "./middleware/error-handler.mjs";
+import {logRoute, errorHandler, handleUploadParsing, handleValidationCheck , validators } from "./middleware/index.mjs";
 import { createArtists, getArtists } from "./features/artists/artists-controller.mjs";
 import { createTags, getTags } from "./features/tags/tags-controller.mjs";
 import { getSimilarImages, newImage } from "./features/image-store/images-controller.mjs";

@@ -174,7 +174,7 @@ const createStringQueryParamValidator = (queryParamName: string) => {
         .withMessage(`query param \'${queryParamName}\' should be a nonempty string`);
 }
 
-const validators = Object.freeze({
+export const validators = Object.freeze({
     taglist : createTagListValidator,
     epoch : createEpochValidator,
     artist: createArtistValidator,
@@ -182,8 +182,4 @@ const validators = Object.freeze({
     srcUrl: createSourceUrlValidator,
     bool: createBoolValidator,
     stringQuery : createStringQueryParamValidator
-})
-
-
-
-export default validators;
+});

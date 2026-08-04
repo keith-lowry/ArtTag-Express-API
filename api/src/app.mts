@@ -48,6 +48,19 @@ app.put("/artists/create",
     handleValidationCheck, 
     asyncHandler(createArtists));
 
+/**
+ * POST images/create: Store a new image with tags and metadata
+ * 
+ * Expects multipart/form-data with:
+ * - "artist": string
+ * - "tags": list of strings separated by tag separator. can also be multiple
+ *   fields with the name "tags".
+ * - "src": string url
+ * - "nsfw": string - 'true' or 'false'
+ * - "image": file with mimetype of image/*
+ * 
+ * Responds with the newly stored image and its associated tags on success.
+ */
 app.post("/images/create", 
     // parse multipart form data
     asyncHandler(handleUploadParsing),

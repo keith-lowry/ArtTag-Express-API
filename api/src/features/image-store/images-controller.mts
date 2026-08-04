@@ -18,10 +18,6 @@ export async function getSimilarImages(req: Request, res:Response): Promise<void
  * @param res Resposne
  */
 export async function newImage(req: Request, res: Response) {
-    // TODO:  the blanket request object makes it difficult to tell
-    // what the expected input is here (what params?). Construct
-    // object with params? idk
-
     // File validations
     if (!req.file) {
         throw new HttpError(400, "request is missing a file");
@@ -50,11 +46,12 @@ export async function newImage(req: Request, res: Response) {
     // store artist
     await storeArtist(artist);
     // console.log("stored artist")
+    // TODO: should we store artist and tags in atomic operation with image?
 
 
     // store image with params
     const newImage: StoredImage = await storeImage(
-        req.file!.buffer,
+        req.file.buffer,
         filetype,
         req.body.tags,
         hash,

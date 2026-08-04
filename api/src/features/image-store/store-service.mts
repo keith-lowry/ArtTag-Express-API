@@ -117,7 +117,8 @@ export async function storeImage(
             "nsfw" : newImageRow.nsfw,
             "hash" : newImageRow.hash,
             "time_created" : newImageRow.time_created,
-            "last_updated" : newImageRow.last_updated
+            "last_updated" : newImageRow.last_updated,
+            "tags" : tags
         };
     }
     catch (error) {

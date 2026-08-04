@@ -24,8 +24,8 @@ export interface StoredImage {
     hash: string,
     time_created: string,
     last_updated: string,
+    tags: string[]
 }
-// TODO: this is different in site types
 
 /**
  * A Tag entry stored in the database.

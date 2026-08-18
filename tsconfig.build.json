@@ -1,0 +1,13 @@
+// tsconfig that depends on all workspace projects, so when we run tsc --build on this file,
+// it builds every ts project in the packages folder
+
+// useful reference: https://github.com/Quramy/npm-ts-workspaces-example
+
+{
+    "files" : [],
+    "references": [
+        {"path": "packages/api"},
+        {"path": "packages/site"},
+        {"path": "packages/types"}
+    ]
+}

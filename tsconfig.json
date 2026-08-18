@@ -1,0 +1,7 @@
+// useful reference: https://github.com/Quramy/npm-ts-workspaces-example
+
+{
+    "compilerOptions": {
+        "composite": true
+    }
+}

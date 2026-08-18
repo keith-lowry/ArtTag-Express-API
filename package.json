@@ -1,5 +1,9 @@
 {
     "private" : "true",
     "name" : "arttag-root",
-    "workspaces" : ["types", "api", "site"]
+    "scripts": {
+        "build": "npx tsc --build tsconfig.build.json",
+        "start" : "npx tsc --build tsconfig.build.json & node ./packages/api/build/app.mjs"
+    },
+    "workspaces" : ["packages/*"]
 }

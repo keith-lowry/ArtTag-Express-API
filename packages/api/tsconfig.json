@@ -23,15 +23,8 @@
         // "sourceMap": true,
     
         /* If your code doesn't run in the DOM: */
-        "lib": ["es2022"],
-        "types": ["node"],
-
-        // /* Allow this project to be referenced in api and site projects */
-        // "declaration": true,
-        // "declarationMap": true,
-        "composite": true
+        "lib": ["es2022"]
       },
       "include": ["src/**/*"],
-      /* NOTE: need empty references array so this project can be referenced elsewhere */
-    //   "references": []
+      "references": [{"path": "../types"}]
 }

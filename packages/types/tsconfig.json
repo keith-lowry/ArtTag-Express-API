@@ -24,9 +24,14 @@
     
         /* If your code doesn't run in the DOM: */
         "lib": ["es2022"],
-        "typeRoots": [
-          "./node_modules/@types"
-        ]
+        "types": ["node"],
+
+        // /* Allow this project to be referenced in api and site projects */
+        // "declaration": true,
+        // "declarationMap": true,
+        "composite": true
       },
-      "include": ["src/**/*"]
+      "include": ["src/**/*"],
+      /* NOTE: need empty references array so this project can be referenced elsewhere */
+      "references": []
 }

@@ -30,9 +30,9 @@ export const siteBuildPath = path.normalize(path.join(__dirname, '../../site/dis
 const app = express();
 const port = 3000;
 
-// api will be running on port 3000 from localhost
+// Javascript from any other source can fetch this API
 app.use(cors({
-    origin: "http://192.168.1.240:3000",
+    origin: "*",
 }));
 
 // const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
@@ -43,8 +43,15 @@ app.use(logRoute);
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
 
+// If browser requests empty path, redirect to the path basename
+// of the React app ("/site").
+app.get("", (_req, res, _next) => {
+    res.redirect("/site");
+})
 
-// serve static site files
+// Serve static site assets from the site build folder. 
+// Note that browser will request these assets without
+// using a basename like "site".
 app.use(express.static(siteBuildPath));
 
 
@@ -116,7 +123,7 @@ app.get(
 // for any site routing, serve the react app.
 // react will handle routing.
 app.get("/site*",
-    (req, res, next) => {
+    (_req, res, _next) => {
         res.sendFile(path.join(siteBuildPath, 'index.html'));
     }
 )

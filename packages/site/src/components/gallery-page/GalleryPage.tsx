@@ -4,10 +4,12 @@ import { captureOnClick, pubImages } from '../../const';
 import IconButton from '@mui/material/IconButton';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+// import { type StoredImage } from '@arttag/types';
 
 
 function GalleryPage() {
   const [focusedImage, setFocusedImage] = useState(-1);
+  // const [images, setImages] = useState<Array<StoredImage>>([]);
 
   // NOTE:
   // will have to fetch thumbnails first, do not fetch full images -> uh yeah just get links for both
@@ -39,6 +41,9 @@ function GalleryPage() {
   const keydownhandler = useRef(handleKeyDown);
 
   useEffect(() => {
+    // fetch images
+    
+    // cleanup function
     return () => {
       document.removeEventListener("keydown", keydownhandler.current);
     }

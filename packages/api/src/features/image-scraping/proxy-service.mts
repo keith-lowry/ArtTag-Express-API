@@ -62,7 +62,7 @@ export async function getBskyPostImageURLs(url:string): Promise<ScrapedImage[]> 
     const handle = handleMatch?.[1];
     const postAuthorUsername = (handle)? handle.split(".")[0] : "";
 
-    console.log(images);
+    // console.log(images);
     return images.map((val) => {
         return {
             postUrl: url,

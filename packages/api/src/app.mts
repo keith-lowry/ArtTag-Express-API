@@ -9,23 +9,43 @@ import {logRoute, errorHandler, handleUploadParsing, handleValidationCheck , val
 import { createArtists, getArtists } from "./features/artists/artists-controller.mjs";
 import { createTags, getTags } from "./features/tags/tags-controller.mjs";
 import { getSimilarImages, newImage } from "./features/image-store/images-controller.mjs";
+import path from "path";
+import { fileURLToPath } from "url";
 
+/**
+ * The string path to this module file.
+ */
+const __filename = fileURLToPath(import.meta.url);
+
+/**
+ * The directory this module file is within.
+ */
+const __dirname = path.dirname(__filename);
+
+/**
+ * Build folder for the React app the api will serve.
+ */
+export const siteBuildPath = path.normalize(path.join(__dirname, '../../site/dist'));
 
 const app = express();
 const port = 3000;
 
+// api will be running on port 3000 from localhost
 app.use(cors({
-    origin: "http://localhost:5173"
+    origin: "http://192.168.1.240:3000",
 }));
 
 // const errorFormatter: ErrorFormatter<string> = (error: ValidationError): string => {
 //     return "TODO";
 // }
 
-
 app.use(logRoute);
 app.use(bodyParser.json())
 app.use('/images/get', express.static(config.imagesFolder))
+
+
+// serve static site files
+app.use(express.static(siteBuildPath));
 
 
 app.get("/tags/list", 
@@ -93,6 +113,13 @@ app.get(
     asyncHandler(proxyController.getImageFromURL)
 )
 
+// for any site routing, serve the react app.
+// react will handle routing.
+app.get("/site*",
+    (req, res, next) => {
+        res.sendFile(path.join(siteBuildPath, 'index.html'));
+    }
+)
 
 // use a global error handler
 app.use(errorHandler);

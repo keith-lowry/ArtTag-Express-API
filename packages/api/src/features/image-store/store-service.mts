@@ -84,12 +84,8 @@ export async function storeImage(
                 (src_url, artist, hash, hash_slice_1, hash_slice_2, hash_slice_3, hash_slice_4, file_type, nsfw) 
                 VALUES (%s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s) RETURNING *`
         let sql = format.withArray(template, args)
-        // console.log(sql)
         const imageRes = await query(sql);
         const newImageRow = imageRes.rows[0];
-        
-        // const id = row.image_id
-        // console.log(qres)
 
         // Step 2: add rows to tagged_images table
         template = `INSERT INTO %I.tagged_images (tag, image_id) VALUES %s`
@@ -97,7 +93,6 @@ export async function storeImage(
             return `('${tag}', ${newImageRow.image_id})`
         })
         sql = format(template, schema, new_rows.join(", "))
-        // console.log(sql)
         await query(sql);
 
         if (!isString(newImageRow.filename)) {
@@ -147,4 +142,25 @@ export async function storeImage(
         // TODO: make/use a DBError class instead?
         throw new HttpError(500, "storeImage: " + error);
     }
+}
+
+export async function listImages(): Promise<Array<StoredImage>> {
+    // select images.*, json_agg(ti.tag) as tags
+    // from images, tagged_images ti 
+    // where images.image_id  = ti.image_id  and images.image_id in (5, 6) group by images.image_id ;
+    const sql = "select i.image_id, i.filename, i.file_type, i.src_url, i.artist, i.nsfw, i.hash, i.time_created, i.last_updated, json_agg(ti.tag) as tags from images i, tagged_images ti " + 
+    "where i.image_id = ti.image_id group by i.image_id order by i.image_id LIMIT 100";
+
+    const res = await query(sql);
+    const images = res.rows;
+
+    return images;
+}
+
+export async function listImagesWithTags(tags: Array<Tag>): Promise<Array<StoredImage>> {
+    if (tags.length === 0) {
+        return await listImages();
+    }
+
+    return [];
 }

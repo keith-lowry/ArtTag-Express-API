@@ -22,7 +22,7 @@ const createEpochValidator = (paramName:string) => {
  * names.
  * @param artistParamName Name of body param that should contain an artist name
  * @param optional Is the artist body param optional?
- * @param isForm
+ * @param isForm Is the body param a multipart/form-data field?
  * @returns Validator for checking tags list body param on request
  */
 const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: boolean = false) => {
@@ -51,7 +51,7 @@ const createTagListValidator = (bodyParamName: string, maxSize: number, isForm: 
     // chain functions modify the chain object in-place
     
     chain.isArray({min: 1, max: maxSize})
-        .withMessage(`body parameter ${bodyParamName} must be a non-empty array of 1 to 10 tags to insert`)
+        .withMessage(`body parameter ${bodyParamName} must be a non-empty array of 1 to ${maxSize} tags`)
         .bail()
         .customSanitizer(value => {
             const set = new Set<String>();

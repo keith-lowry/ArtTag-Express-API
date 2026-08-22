@@ -1,6 +1,6 @@
 import { type Request, type Response } from "express";
 import { HttpError, type StoredImage } from "@arttag/types";
-import { storeArtist, storeImage, storeTags } from "./store-service.mjs";
+import { listImages, storeArtist, storeImage, storeTags } from "./store-service.mjs";
 import { getImageHash64 } from "./hashing-service.mjs";
 
 /**
@@ -9,6 +9,11 @@ import { getImageHash64 } from "./hashing-service.mjs";
  */
 export async function getSimilarImages(req: Request, res:Response): Promise<void> {
     res.send("TODO");
+}
+
+export async function listImagesWithTags(req: Request, res: Response): Promise<void> {
+    const data = await listImages();
+    res.send(data);
 }
 
 /**
@@ -37,17 +42,12 @@ export async function newImage(req: Request, res: Response) {
     const hash = await getImageHash64(req.file!.buffer);
 
     const filetype:string = req.file!.mimetype.split("/")[1].toLowerCase()
-    // console.log("got params")
 
     // store tags
     await storeTags(body.tags);
-    // console.log("stored tags")
 
     // store artist
     await storeArtist(artist);
-    // console.log("stored artist")
-    // TODO: should we store artist and tags in atomic operation with image?
-
 
     // store image with params
     const newImage: StoredImage = await storeImage(
@@ -59,8 +59,6 @@ export async function newImage(req: Request, res: Response) {
         srcUrl,
         req.body.nsfw
     );
-    // console.log("stored image")
-
     
     res.status(200).json(newImage);
 }

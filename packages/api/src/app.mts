@@ -8,7 +8,7 @@ import cors from "cors";
 import {logRoute, errorHandler, handleUploadParsing, handleValidationCheck , validators } from "./middleware/index.mjs";
 import { createArtists, getArtists } from "./features/artists/artists-controller.mjs";
 import { createTags, getTags } from "./features/tags/tags-controller.mjs";
-import { getSimilarImages, newImage } from "./features/image-store/images-controller.mjs";
+import { getSimilarImages, listImagesWithTags, newImage } from "./features/image-store/images-controller.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -98,6 +98,13 @@ app.post("/images/create",
     validators.bool("nsfw", false),
     handleValidationCheck,
     asyncHandler(newImage)
+);
+
+app.get("/images/list",
+    // validators.taglist("tags", config.maxArrLen),
+    // TODO: uh check for list of tags
+    handleValidationCheck,
+    asyncHandler(listImagesWithTags)
 );
 
 app.get("/images/similar", asyncHandler(getSimilarImages));

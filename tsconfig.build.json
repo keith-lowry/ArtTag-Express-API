@@ -6,8 +6,8 @@
 {
     "files" : [],
     "references": [
-        {"path": "packages/api"},
+        {"path": "packages/types"},
         {"path": "packages/site"},
-        {"path": "packages/types"}
+        {"path": "packages/api"}
     ]
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 // TODO: make separate css file
+import './GalleryPage.css';
 import { captureOnClick, pubImages } from '../../const';
 import IconButton from '@mui/material/IconButton';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -111,4 +112,4 @@ function GalleryPage() {
   )
 }
 
-export default GalleryPage
+export default GalleryPage;

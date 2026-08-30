@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import './UploadFormModal.css';
 import { isObject, isString } from '@arttag/types';
-import { TagSharp } from '@mui/icons-material';
 import { Dialog, DialogContent, DialogTitle, Modal, TextField } from '@mui/material';
-import { useFetcher } from 'react-router';
+import { useFilePicker } from 'use-file-picker';
 
 class StoreFormData {
     readonly src_url: string = "";
@@ -84,6 +83,18 @@ interface UploadFormProps {
 function UploadFormModal({active, onClose} : UploadFormProps) {
     // const [displayMode, setDisplayMode] = useState<string>("block");
     const [formData, setFormData] = useState<StoreFormData>(new StoreFormData());
+    const { openFilePicker, filesContent, loading } = useFilePicker({
+        accept: ".png",
+        multiple: false,
+        // NOTE: can read into an array buffer if desired
+        // TODO: probably want to read as array buffer? and then
+        // turn to blob and get data url for img preview
+        readAs:  'DataURL'
+        
+    });
+
+    new Blob()
+
     return (
         // reference https://v7.mui.com/material-ui/react-dialog/
         <Dialog open={active} onClose={onClose}>
@@ -92,11 +103,22 @@ function UploadFormModal({active, onClose} : UploadFormProps) {
             </DialogTitle>
             <DialogContent>
                 <form className='store-image-form'>
+                    {/* <img src="?" style={{width:"320px", height:"256px", background:"lightslategray"}}>
+                        
+                    </img> */}
+                    <button onClick={() => openFilePicker()}>
+                        Pick File
+                    </button>
+                    {
+                        filesContent.map((file, index) => (
+                            // TODO: properly resize img
+                            <img key={index} src={file.content} style={{width:"320px", height:"256px"}}></img>
+                        )) 
+                    }
                     <TextField autoFocus required id="src_url" name="url" label="Source URL" type="url" fullWidth variant="standard" />
                     {/* TODO: file input field */}
                 </form>
             </DialogContent>
-            
         </Dialog>
         // </div>
     )
